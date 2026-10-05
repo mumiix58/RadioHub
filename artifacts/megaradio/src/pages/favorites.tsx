@@ -10,6 +10,7 @@ import { useTranslation } from "@/hooks/useTranslation";
 import { useSeoRouting } from "@/hooks/useSeoRouting";
 import { stationQueryFreshness } from '@/lib/station-query-policy';
 import { availableStations } from '@/utils/station-availability';
+import { RouteBreadcrumbs } from '@/components/RouteBreadcrumbs';
 
 export default function Favorites() {
   const [sortQuery, setSortQuery] = useState('newest');
@@ -73,11 +74,11 @@ export default function Favorites() {
 
   return (
     <div>
-      {/* Header with count and sorting - Figma: 54px gap to cards */}
-      <div className="flex items-center justify-between pb-[30px]">
-        <h5 className="text-[22px] font-bold">
+      {/* Title and sorting lead the page; the breadcrumb is supporting context below. */}
+      <div className="flex items-center justify-between gap-4">
+        <h5 className="flex items-center gap-2 text-[22px] font-bold leading-7">
           {t('your_favorites')}
-          <span className="ml-2 rounded bg-[#202020] px-4 py-2 text-neutral-500">
+          <span className="inline-flex h-8 min-w-8 items-center justify-center rounded bg-[#202020] px-2 text-sm text-neutral-500">
             {favoriteStations.length}
           </span>
         </h5>
@@ -139,6 +140,8 @@ export default function Favorites() {
           )}
         </div>
       </div>
+
+      <RouteBreadcrumbs placement="content" />
 
       {/* Authentication Error State */}
       {isAuthError && (

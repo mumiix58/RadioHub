@@ -30,6 +30,7 @@ class PageErrorBoundary extends Component<
   }
 }
 import { queryClient } from "./lib/queryClient";
+import { isProfileFavoritesPath } from '@/lib/profile-layout';
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 // Toaster moved to a `lazy(() => ...)` declaration further below so the
 // Radix toast primitives don't land in the entry chunk.
@@ -516,6 +517,7 @@ function PlayerWrapper() {
         {/* Header with centered content - header itself is full-width for background */}
         <Suspense fallback={<RadioHeaderFallback />}>
           <RadioHeader 
+            profileLayout={isProfilePage}
             showAddStationModal={showAddStationModal}
             setShowAddStationModal={setShowAddStationModal}
             selectedCountry={selectedCountry}
@@ -528,7 +530,7 @@ function PlayerWrapper() {
               client-side counterpart to the SSR breadcrumb in
               api-server/seo-renderer.ts so the BreadcrumbList JSON-LD always
               has matching visible links post-hydration. */}
-          {!isMessagesPage && <RouteBreadcrumbs />}
+          {!isMessagesPage && !isProfileFavoritesPath(englishPath) && <RouteBreadcrumbs />}
           <PublicRouter selectedCountry={selectedCountry} onCountryChange={handleCountryChange} />
         </main>
         {/* Footer - hidden on profile pages per reference (user.vue has no footer) */}

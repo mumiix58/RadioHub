@@ -4,6 +4,7 @@ import { getLanguageFromPath } from '@workspace/seo-shared/seo-config';
 import { URL_TRANSLATIONS } from '@workspace/seo-shared/url-translations';
 import { buildRegionBreadcrumbItems } from '@workspace/seo-shared/region-breadcrumbs';
 import { useTranslation } from '@/hooks/useTranslation';
+import { PROFILE_CONTENT_INSET } from '@/lib/profile-layout';
 
 /**
  * Visible breadcrumb trail rendered on every non-home page in the React app —
@@ -175,12 +176,13 @@ function computeItems(params: {
   return items;
 }
 
-export function RouteBreadcrumbs() {
+export function RouteBreadcrumbs({ placement = 'page' }: { placement?: 'page' | 'content' } = {}) {
   const [location] = useLocation();
   const { t, localeTranslations } = useTranslation();
   const { override } = useContext(BreadcrumbOverrideContext);
 
   const { language, cleanPath } = getLanguageFromPath(location);
+  const isProfilePage = cleanPath === '/profile' || cleanPath.startsWith('/profile/');
 
   const items = useMemo(
     () =>
@@ -199,9 +201,9 @@ export function RouteBreadcrumbs() {
   return (
     <nav
       aria-label="breadcrumb"
-      className={`breadcrumb bg-[#101010] px-4 py-3 text-xs sm:text-sm ${cleanPath.startsWith('/profile/') ? 'lg:pl-[272px]' : ''}`}
+      className={`breadcrumb text-xs sm:text-sm ${placement === 'content' ? 'mt-2 mb-5' : `bg-[#101010] py-3 ${isProfilePage ? PROFILE_CONTENT_INSET : 'px-4'}`}`}
     >
-      <ol className="container mx-auto flex flex-wrap items-center gap-2 text-gray-400">
+      <ol className={`${placement === 'content' || isProfilePage ? '' : 'container mx-auto '}flex flex-wrap items-center gap-2 text-gray-400`}>
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;
           return (
