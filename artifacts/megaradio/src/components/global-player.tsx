@@ -93,7 +93,7 @@ export default function GlobalPlayer() {
         <div 
           className={cn(
             "fixed z-30 right-0 hidden md:block",
-            isProfilePage ? "left-0 lg:left-64" : "left-0"
+            isProfilePage ? "left-0 lg:left-[250px]" : "left-0"
           )}
           style={{ 
             bottom: '156px',
@@ -160,14 +160,14 @@ export default function GlobalPlayer() {
       )}
       
       {/* Main Player Container - on profile pages, offset by sidebar width
-          (16rem = lg:w-64) at the lg breakpoint where the ProfileLayout
+          (250px) at the lg breakpoint where the ProfileLayout
           sidebar becomes visible. Below lg, span full width as usual. */}
       <div 
         className={cn(
           "fixed bottom-0 right-0 z-20 transition-all duration-300 ease-in-out",
           collapsed ? "h-[60px] md:h-[79px]" : "h-[104px] md:h-[156px]",
           isProfilePage
-            ? "left-0 w-full lg:left-64 lg:w-[calc(100%-16rem)]"
+            ? "left-0 w-full lg:left-[250px] lg:w-[calc(100%-250px)]"
             : "left-0 w-full"
         )}
         style={{
