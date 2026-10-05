@@ -56,6 +56,20 @@
   font-weight: 700;
 }
 
+/* Keep the Figma wordmark visible whenever the desktop profile sidebar is shown. */
+@media (min-width: 1024px) {
+  .header-brand--profile {
+    gap: 11px;
+  }
+
+  .header-brand--profile .header-brand__wordmark {
+    display: inline-flex;
+    font-size: 20.384px;
+    line-height: normal;
+    letter-spacing: normal;
+  }
+}
+
 @media (min-width: 768px) {
   .header-brand__mark {
     width: 42px;

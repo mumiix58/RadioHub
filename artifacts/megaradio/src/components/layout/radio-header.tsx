@@ -42,6 +42,7 @@ import {
 import { usePremiumStatus } from "@/hooks/usePremiumStatus";
 
 interface RadioHeaderProps {
+  profileLayout?: boolean;
   showSearch?: boolean;
   showAddStationModal?: boolean;
   setShowAddStationModal?: (show: boolean) => void;
@@ -50,6 +51,7 @@ interface RadioHeaderProps {
 }
 
 export default function RadioHeader({ 
+  profileLayout = false,
   showSearch = true,
   showAddStationModal = false,
   setShowAddStationModal,
@@ -874,9 +876,9 @@ export default function RadioHeader({
       {/* OPTIMIZED HEADER - Compact, responsive, balanced from all sides */}
       <nav className="fixed top-0 left-0 right-0 z-40 w-full text-white">
         <div className="flex items-center justify-center border-b border-gray-900 bg-[#0E0E0E] sm:border-0 w-full">
-          {/* Main content container - Uses .container class for perfect alignment with content below */}
+          {/* Profile chrome spans the viewport; public pages retain the centered container. */}
           {/* CRITICAL: Desktop nav shows at xl(1280px) to prevent overflow on tablet */}
-          <div className="container relative box-border overflow-hidden grid grid-cols-5 xl:flex xl:justify-between h-[70px] md:h-[80px] lg:h-[90px] xl:h-[105px] items-center">
+          <div className={`container ${profileLayout ? 'lg:max-w-none lg:px-[30px]' : ''} relative box-border overflow-hidden grid grid-cols-5 xl:flex xl:justify-between h-[70px] md:h-[80px] lg:h-[90px] xl:h-[105px] items-center`}>
             
             {/* Mobile: Menu + Logo together on left side | Desktop: Logo only */}
             <div className="col-span-2 flex items-center gap-5 xl:col-auto xl:gap-2">
@@ -902,7 +904,7 @@ export default function RadioHeader({
                 )}
               </button>
 
-              <HeaderBrand href={getLocalizedUrl("/")} />
+              <HeaderBrand href={getLocalizedUrl("/")} variant={profileLayout ? 'profile' : 'public'} />
             </div>
 
             {/* Desktop Navigation + Right Controls - all right-aligned together (visible xl+) */}

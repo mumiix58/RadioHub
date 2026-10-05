@@ -2,24 +2,26 @@ import { useAuth } from "@/hooks/useAuth";
 import { logoutAccount } from '@/lib/logout';
 import { toast } from '@/hooks/use-toast';
 import { useLocation } from "wouter";
-import { useState, useEffect, startTransition } from "react";
-import { Menu, X, Heart, Compass, User as UserIcon, MessageCircle, MessageSquareWarning, LogOut } from "lucide-react";
+import { useEffect, startTransition } from "react";
 import { useSeoRouting } from "@/hooks/useSeoRouting";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getProfileNavCopy } from '@/lib/profile-nav-copy';
+import { PROFILE_CONTENT_INSET, isProfileFavoritesPath } from '@/lib/profile-layout';
+import { ProfileNavIcon } from './profile-nav-icon';
 
 function NavLink({ href, children, isActive }: { href: string; children: React.ReactNode; isActive: boolean }) {
   const [, navigate] = useLocation();
   return (
     <a
       href={href}
+      aria-current={isActive ? 'page' : undefined}
       onClick={(e) => {
         e.preventDefault();
         startTransition(() => { navigate(href); });
       }}
-      className={`flex cursor-pointer items-center rounded px-5 py-3 ${isActive ? 'bg-[#2D2D2D]' : ''}`}
+      className={`group flex min-h-[45px] cursor-pointer items-center rounded-[5px] px-5 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF4199] ${isActive ? 'bg-[#2D2D2D]' : ''}`}
     >
       {children}
     </a>
@@ -42,7 +44,6 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
   const { getLocalizedUrl, englishPath } = useSeoRouting();
   const isMessagesPage = englishPath.replace(/\/$/, '') === '/profile/messages';
   const [location] = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -86,8 +87,9 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
   
   // Get clean path for comparison
   const isActive = (path: string) => {
-    const currentPath = location.split('?')[0]; // Remove query params
-    return currentPath === path;
+    const currentPath = location.split(/[?#]/)[0].replace(/\/$/, '');
+    const targetPath = path.replace(/\/$/, '');
+    return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`);
   };
 
   return (
@@ -98,29 +100,29 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
         {/* Sidebar Navigation - fixed full-width layout */}
         <div className="
           hidden
-          md:fixed md:inset-y-0 md:left-0 md:top-[70px] md:z-10 md:w-64 md:flex-col md:bg-[#151515] md:pt-10
-          lg:top-[90px] lg:flex
+          lg:fixed lg:inset-y-0 lg:left-0 lg:top-[90px] lg:z-10 lg:w-[250px] lg:flex-col lg:bg-[#151515]
+          lg:flex xl:top-[105px]
         ">
-          <div className="flex h-full flex-col justify-between px-5">
+          <div className="flex h-full flex-col justify-between overflow-y-auto px-[30px]">
             {/* Main Navigation Links - Reference: space-y-5 */}
-            <div className="space-y-5 pt-10">
+            <div className="space-y-[14px] pt-7">
               <NavLink href={getLocalizedUrl("/profile/favorites")} isActive={isActive(getLocalizedUrl("/profile/favorites"))}>
-                <div className="mr-5"><Heart className="w-6 h-6 text-[#FF4199]" /></div>
+                <ProfileNavIcon name="favorites" />
                 <div className="text-base font-bold">{navLabel('nav_your_favorites', 'favorites')}</div>
               </NavLink>
 
               <NavLink href={getLocalizedUrl("/profile/discover")} isActive={isActive(getLocalizedUrl("/profile/discover"))}>
-                <div className="mr-5"><Compass className="w-6 h-6 text-[#FF4199]" /></div>
+                <ProfileNavIcon name="discover" />
                 <div className="text-base font-bold">{navLabel('user_menu_discover', 'discover')}</div>
               </NavLink>
 
               <NavLink href={getLocalizedUrl("/profile/settings")} isActive={isActive(getLocalizedUrl("/profile/settings"))}>
-                <div className="mr-5"><UserIcon className="w-6 h-6 text-[#FF4199]" /></div>
+                <ProfileNavIcon name="profile" />
                 <div className="text-base font-bold">{navLabel('user_menu_profile', 'profile')}</div>
               </NavLink>
 
               <NavLink href={getLocalizedUrl("/profile/messages")} isActive={isActive(getLocalizedUrl("/profile/messages"))}>
-                <div className="mr-5"><MessageCircle className="w-6 h-6 text-[#FF4199]" /></div>
+                <ProfileNavIcon name="messages" />
                 <div className="text-base font-bold flex-1">{navLabel('messages', 'messages')}</div>
                 {unreadCount > 0 && (
                   <span className="bg-[#FF4199] text-white text-[12px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
@@ -133,7 +135,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
             {/* Bottom Navigation Links */}
             <div className="mb-4 space-y-5">
               <NavLink href={getLocalizedUrl("/feedback")} isActive={isActive(getLocalizedUrl("/feedback"))}>
-                <div className="mr-5"><MessageSquareWarning className="w-6 h-6 text-[#FF4199]" /></div>
+                <ProfileNavIcon name="feedback" />
                 <div className="text-base font-bold">{navLabel('feedback', 'feedback')}</div>
               </NavLink>
 
@@ -149,9 +151,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
                 }}
                 className="flex w-full cursor-pointer items-center rounded px-5 py-3 text-left"
               >
-                <div className="mr-5">
-                  <LogOut className="w-6 h-6 text-[#FF4199]" />
-                </div>
+                <ProfileNavIcon name="logout" />
                 <div className="text-base font-bold">{navLabel('nav_logout', 'logout')}</div>
               </button>
             </div>
@@ -160,8 +160,8 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
 
         {/* Main Content Area - full width with sidebar offset */}
         <div className={`relative w-full ${isMessagesPage ? 'h-full min-h-0' : ''}`}>
-          <div className={`w-full bg-[#0E0E0E] lg:pl-64 ${isMessagesPage ? 'h-full min-h-0' : ''}`}>
-            <div className={isMessagesPage ? 'h-full min-h-0' : 'px-2 py-8 md:px-8'}>
+          <div className={`w-full bg-[#0E0E0E] ${isMessagesPage ? 'h-full min-h-0 lg:pl-[250px]' : ''}`}>
+            <div className={isMessagesPage ? 'h-full min-h-0' : `${PROFILE_CONTENT_INSET} ${isProfileFavoritesPath(englishPath) ? 'pt-5 pb-8' : 'py-8'}`}>
               {children}
             </div>
           </div>
