@@ -23,12 +23,14 @@ it.each(labels)('%s account breadcrumb uses localized fallbacks and keeps transl
   state.location = `/${language}/${route.users || 'users'}/listener`;
   const view = render(<RouteBreadcrumbs />);
   expect(screen.getByRole('link', { name: users })).toHaveAttribute('href', `/${language}/${route.users || 'users'}`);
-  expect(screen.getByRole('navigation')).not.toHaveClass('lg:pl-[272px]');
+  expect(screen.getByRole('navigation')).not.toHaveClass('lg:pl-[280px]');
+  expect(screen.getByRole('list')).toHaveClass('container');
   state.location = `/${language}/${route.profile || 'profile'}/${route.settings || 'settings'}`;
   view.rerender(<RouteBreadcrumbs />);
   expect(screen.getByRole('link', { name: profile })).toHaveAttribute('href', `/${language}/${route.profile || 'profile'}`);
   expect(screen.getByRole('link', { name: settings })).toHaveAttribute('href', state.location);
-  expect(screen.getByRole('navigation')).toHaveClass('lg:pl-[272px]');
+  expect(screen.getByRole('navigation')).toHaveClass('lg:pl-[280px]');
+  expect(screen.getByRole('list')).not.toHaveClass('container');
 });
 
 it('respects current-locale account labels ahead of fallbacks', () => {
