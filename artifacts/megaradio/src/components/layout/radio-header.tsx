@@ -5,6 +5,7 @@ import { getLocalizedCountryDisplayName } from '@/utils/localized-country';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from '@/lib/queryClient';
 import { notificationTarget } from '@/lib/notification-target';
+import { tvPairingLoginReturnTo, withAuthReturnTo } from '@/lib/safe-auth-return';
 import { Link, useLocation } from "wouter";
 import { User } from "lucide-react";
 import notificationIcon from "@assets/notification1.png";
@@ -86,6 +87,7 @@ export default function RadioHeader({
   const getLocalizedRegionsSegment = (): string =>
     URL_TRANSLATIONS[currentLanguage]?.['regions'] || 'regions';
   const [location, setLocation] = useLocation();
+  const loginReturnTo = tvPairingLoginReturnTo(location, typeof window === 'undefined' ? '' : window.location.search);
   
   // Use getLanguageForCountry helper from @shared/seo-config (single source of truth)
   
@@ -1058,7 +1060,7 @@ export default function RadioHeader({
                   
                   {/* Login Icon */}
                   <Link
-                    href={`${getLocalizedUrl("/login")}?returnTo=${encodeURIComponent(location)}`}
+                    href={withAuthReturnTo(getLocalizedUrl('/login'), loginReturnTo)}
                     className="xl:hidden flex items-center justify-center w-10 h-10 rounded-full bg-[#FF4199] hover:bg-[#E5357F] transition-colors"
                     aria-label={t('nav_login', 'Log in')}
                     data-testid="button-mobile-login"
@@ -1247,7 +1249,7 @@ export default function RadioHeader({
                   {/* Log in Button - desktop only (xl+) */}
                   <div className="hidden xl:flex items-center">
                     <Link
-                      href={`${getLocalizedUrl("/login")}?returnTo=${encodeURIComponent(location)}`}
+                      href={withAuthReturnTo(getLocalizedUrl('/login'), loginReturnTo)}
                       className="flex items-center justify-center text-white font-semibold transition-colors bg-[#D82C80] hover:bg-[#C32470] w-[97px] h-[45px] rounded-[25px] text-sm"
                     >
                       {t('nav_login', 'Log in')}

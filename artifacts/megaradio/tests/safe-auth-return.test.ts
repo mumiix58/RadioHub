@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { safeAuthReturnTo, withAuthReturnTo } from '../src/lib/safe-auth-return';
+import { safeAuthReturnTo, tvPairingLoginReturnTo, withAuthReturnTo } from '../src/lib/safe-auth-return';
 
 describe('same-origin auth return targets', () => {
   it.each(['//evil.example/path', '/\\evil.example', '\\evil.example', 'https://evil.example', 'javascript:alert(1)', '/%2Fevil.example', '/%5cevil.example', '/%0aevil', '/%zz', '/\n/evil', null])('rejects unsafe target %s', value => {
@@ -19,5 +19,19 @@ describe('same-origin auth return targets', () => {
       expect(source).toContain('safeAuthReturnTo('); expect(source).toContain('withAuthReturnTo(');
       expect(source).not.toContain("returnTo.startsWith('/')");
     }
+  });
+  it.each(['/tv', '/en/tv', '/tr/tv'])('header login preserves a valid TV code on %s', pathname => {
+    const target = tvPairingLoginReturnTo(pathname, '?code=123456&auth_token=not-for-return&other=value');
+    expect(target).toBe(`${pathname}?code=123456`);
+    const login = withAuthReturnTo('/en/login', target);
+    expect(new URL(login, 'https://themegaradio.com').searchParams.get('returnTo')).toBe(target);
+    expect(login).not.toContain('auth_token');
+  });
+  it('does not preserve invalid codes or unrelated page queries', () => {
+    expect(tvPairingLoginReturnTo('/en/tv', '?code=ABC123')).toBe('/en/tv');
+    expect(tvPairingLoginReturnTo('/en/tv', '?code=1234567')).toBe('/en/tv');
+    expect(tvPairingLoginReturnTo('/en/station/example', '?code=123456')).toBe('/en/station/example');
+    expect(tvPairingLoginReturnTo('/api/admin', '?returnTo=/en/tv&code=123456')).toBe('/api/admin');
+    expect(tvPairingLoginReturnTo('/\\external.example', '?code=123456')).toBe('/');
   });
 });

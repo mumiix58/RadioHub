@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { isPublicTvAccessRequest } from './public-tv-access';
 
 /**
  * Geo-Block Middleware
@@ -126,7 +127,8 @@ export function geoBlockMiddleware(req: Request, res: Response, next: NextFuncti
   }
 
   // 1. Block known bad countries
-  if (BLOCKED_COUNTRIES.size > 0 && cc && BLOCKED_COUNTRIES.has(cc)) {
+  if (BLOCKED_COUNTRIES.size > 0 && cc && BLOCKED_COUNTRIES.has(cc)
+    && !isPublicTvAccessRequest(req.method, req.path)) {
     blockedCount++;
     maybeFlushLog();
     dropSocket(req);
