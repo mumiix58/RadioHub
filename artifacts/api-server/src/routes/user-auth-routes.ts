@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { publicUserIdentity } from '../utils/public-user-identity';
 import { invalidateCommunityProfiles } from '../services/community-profiles';
 import { SEO_LANGUAGES } from '@workspace/seo-shared/seo-config';
+import { safeOAuthReturnTo, resolveGoogleOAuthReturnTo, buildRedirectWithToken, buildOAuthFailureRedirect, buildGoogleSessionRedirect } from '../auth/oauth-redirect';
 // 2026-05-13 hotfix: `deps` (built in routes.ts) does NOT export CacheKeys
 // or CacheManager — three sites in this file used to do
 // `const { CacheKeys, CacheManager } = deps;` which threw at runtime
@@ -64,27 +65,6 @@ function extractLanguageFromReferer(referer: string): string | null {
     }
     catch (_) { /* malformed referer, ignore */ }
     return null;
-}
-/**
- * Safely append `auth_token` to a relative redirect target, preserving any
- * existing query string and fragment. Handles the edge cases the architect
- * flagged: returnTo with `?foo=bar`, returnTo with `#fragment`, etc.
- */
-function buildRedirectWithToken(frontendBase: string, returnTo: string, token: string): string {
-    const placeholderBase = 'http://x.local';
-    const base = frontendBase || placeholderBase;
-    try {
-        const url = new URL(returnTo, base);
-        url.searchParams.set('auth_token', token);
-        if (!frontendBase)
-            return url.pathname + url.search + url.hash;
-        return url.toString();
-    }
-    catch (_) {
-        // Fallback: returnTo not parseable — append carefully with `?` vs `&`
-        const sep = returnTo.includes('?') ? '&' : '?';
-        return `${frontendBase}${returnTo}${sep}auth_token=${encodeURIComponent(token)}`;
-    }
 }
 async function generateAppleClientSecret(): Promise<string> {
     const jose = await import('jose');
@@ -478,9 +458,7 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
         // Save returnTo URL in session for post-login redirect.
         // Only relative paths starting with '/' are accepted to prevent open redirects.
         const rawReturnTo = req.query.returnTo as string | undefined;
-        const returnTo = (typeof rawReturnTo === 'string' && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//'))
-            ? rawReturnTo
-            : undefined;
+        const returnTo = safeOAuthReturnTo(rawReturnTo);
         if (returnTo && req.session) {
             (req.session as any).oauthReturnTo = returnTo;
             logger.log('🔀 Saved OAuth returnTo:', returnTo);
@@ -566,9 +544,7 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
         // Reject protocol-relative `//evil.com` and any absolute URL — otherwise
         // an attacker can pivot the post-login redirect to an external host.
         const rawReturnTo = req.query.returnTo as string | undefined;
-        const returnTo = (typeof rawReturnTo === 'string' && rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//'))
-            ? rawReturnTo
-            : undefined;
+        const returnTo = safeOAuthReturnTo(rawReturnTo);
         if (returnTo && req.session) {
             (req.session as any).oauthReturnTo = returnTo;
         }
@@ -610,51 +586,28 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
         const savedLang = (req.session as any)?.oauthReturnLang || '';
         const langPrefix = savedLang ? `/${savedLang}` : '';
         const frontendBase = process.env.FRONTEND_URL || '';
+        const returnTo = resolveGoogleOAuthReturnTo(
+            (req.session as any)?.oauthReturnTo, req.query.state,
+            process.env.SESSION_SECRET || 'radio-station-dev-only-secret-do-not-use-in-prod');
+        const failureRedirect = (error: string) => buildOAuthFailureRedirect(frontendBase, returnTo, savedLang, error);
         void logAuthEvent(req, { method: 'google', event: 'callback_received', ok: true, message: `lang=${savedLang || '(none)'} hasState=${!!req.query.state}` });
         passport.authenticate('google', {
-            failureRedirect: `${frontendBase}${langPrefix}/?error=google_auth_failed`
+            failureRedirect: failureRedirect('google_auth_failed')
         }, async (err: any, user: any, info: any) => {
             if (err) {
                 logger.error('Google OAuth callback error:', err);
                 void logAuthEvent(req, { method: 'google', event: 'passport_error', ok: false, message: err?.message || String(err) });
-                return void res.redirect(`${frontendBase}${langPrefix}/?error=google_auth_failed`);
+                return void res.redirect(failureRedirect('google_auth_failed'));
             }
             if (!user) {
                 void logAuthEvent(req, { method: 'google', event: 'no_user_returned', ok: false, message: info?.message || 'cancelled or rejected' });
-                return void res.redirect(`${frontendBase}${langPrefix}/?error=google_auth_cancelled`);
+                return void res.redirect(failureRedirect('google_auth_cancelled'));
             }
             void logAuthEvent(req, { method: 'google', event: 'profile_resolved', ok: true, email: user.email, userId: user._id?.toString() });
             try {
                 const token = await generateAuthToken(user._id.toString(), 'web');
                 logger.log(`✅ Google OAuth token generated for: ${user.email} userId=${user._id} tokenPrefix=${token.slice(0, 16)}… len=${token.length}`);
                 void logAuthEvent(req, { method: 'google', event: 'token_issued', ok: true, email: user.email, userId: user._id?.toString(), message: `tokenLen=${token.length}` });
-                // Resolve redirect target: prefer session, fall back to HMAC-signed
-                // `state` query param (set in /api/auth/google) so the redirect still
-                // lands the user on /tv (or wherever they started) even when the
-                // session cookie was dropped between Google and the callback.
-                let returnTo: string | undefined = (req.session as any)?.oauthReturnTo;
-                if (!returnTo) {
-                    const stateParam = req.query.state as string | undefined;
-                    if (stateParam && stateParam.includes('.')) {
-                        try {
-                            const crypto = await import('crypto');
-                            const secret = process.env.SESSION_SECRET || 'radio-station-dev-only-secret-do-not-use-in-prod';
-                            const [payload, sig] = stateParam.split('.', 2);
-                            const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url').slice(0, 16);
-                            if (sig === expected) {
-                                const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-                                if (typeof decoded?.r === 'string' && decoded.r.startsWith('/') && !decoded.r.startsWith('//')) {
-                                    returnTo = decoded.r;
-                                    logger.log('🔀 Recovered returnTo from OAuth state param:', returnTo);
-                                }
-                            }
-                            else {
-                                logger.log('⚠️ Google OAuth state HMAC mismatch — ignoring state');
-                            }
-                        }
-                        catch (_) { /* ignore malformed state */ }
-                    }
-                }
                 delete (req.session as any).oauthReturnTo;
                 delete (req.session as any).oauthReturnLang;
                 // Persist the session cleanup + the passport user before redirecting.
@@ -671,7 +624,7 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
                 // Re-validate returnTo (defence in depth) before redirecting.
                 // Use buildRedirectWithToken so existing query strings or fragments
                 // in returnTo are preserved (e.g. `/en/tv?ref=abc#section`).
-                if (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+                if (returnTo) {
                     void logAuthEvent(req, { method: 'google', event: 'redirect_with_token', ok: true, email: user.email, userId: user._id?.toString(), message: `to=${returnTo}` });
                     return void res.redirect(buildRedirectWithToken(frontendBase, returnTo, token));
                 }
@@ -684,7 +637,7 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
                 req.login(user, (loginErr: any) => {
                     if (loginErr) {
                         void logAuthEvent(req, { method: 'google', event: 'session_login_error', ok: false, email: user.email, userId: user._id?.toString(), message: loginErr?.message || String(loginErr) });
-                        return void res.redirect(`${frontendBase}${langPrefix}/?error=login_failed`);
+                        return void res.redirect(failureRedirect('login_failed'));
                     }
                     (req.session as any).user = {
                         userId: user._id.toString(),
@@ -693,7 +646,7 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
                     };
                     req.session.save(() => {
                         void logAuthEvent(req, { method: 'google', event: 'session_fallback_redirect', ok: true, email: user.email, userId: user._id?.toString() });
-                        res.redirect(`${frontendBase}${langPrefix}/?success=google_login`);
+                        res.redirect(buildGoogleSessionRedirect(frontendBase, returnTo, savedLang));
                     });
                 });
             }
@@ -712,20 +665,22 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
         const frontendBase = process.env.FRONTEND_URL || '';
         const savedLang = (req.session as any)?.oauthReturnLang || '';
         const langPrefix = savedLang ? `/${savedLang}` : '';
+        const returnTo = safeOAuthReturnTo((req.session as any)?.oauthReturnTo);
+        const failureRedirect = () => buildOAuthFailureRedirect(frontendBase, returnTo, savedLang, 'apple_auth_failed');
         void logAuthEvent(req, { method: 'apple', event: 'callback_received', ok: true, message: `lang=${savedLang || '(none)'} hasCode=${!!req.body?.code} hasIdToken=${!!req.body?.id_token}` });
         try {
             const { code, id_token, state, user: userDataStr } = req.body;
             if (!code && !id_token) {
                 logger.error('🍎 Apple callback: No code or id_token received');
                 void logAuthEvent(req, { method: 'apple', event: 'missing_credentials', ok: false, message: 'no code and no id_token in body' });
-                return void res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+                return void res.redirect(failureRedirect());
             }
             const savedState = (req.session as any)?.appleOAuthState;
             delete (req.session as any).appleOAuthState;
             if (!state || !savedState || state !== savedState) {
                 logger.error('🍎 Apple OAuth state mismatch or missing', { state: !!state, savedState: !!savedState });
                 void logAuthEvent(req, { method: 'apple', event: 'state_mismatch', ok: false, message: `state=${!!state} savedState=${!!savedState}` });
-                return void res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+                return void res.redirect(failureRedirect());
             }
             const jose = await import('jose');
             let applePayload: any;
@@ -742,7 +697,7 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
                 catch (verifyErr: any) {
                     logger.error('🍎 Apple id_token verification failed:', verifyErr);
                     void logAuthEvent(req, { method: 'apple', event: 'id_token_verify_failed', ok: false, message: verifyErr?.message || String(verifyErr) });
-                    return void res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+                    return void res.redirect(failureRedirect());
                 }
             }
             else if (code) {
@@ -765,7 +720,7 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
                         const errorText = await tokenResponse.text();
                         logger.error('🍎 Apple token exchange failed:', errorText);
                         void logAuthEvent(req, { method: 'apple', event: 'token_exchange_http_error', ok: false, message: `status=${tokenResponse.status}`, detail: { body: errorText.slice(0, 500) } });
-                        return void res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+                        return void res.redirect(failureRedirect());
                     }
                     const tokenData = await tokenResponse.json() as any;
                     const JWKS = jose.createRemoteJWKSet(new URL('https://appleid.apple.com/auth/keys'));
@@ -778,12 +733,12 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
                 catch (tokenErr: any) {
                     logger.error('🍎 Apple token exchange error:', tokenErr);
                     void logAuthEvent(req, { method: 'apple', event: 'token_exchange_error', ok: false, message: tokenErr?.message || String(tokenErr) });
-                    return void res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+                    return void res.redirect(failureRedirect());
                 }
             }
             if (!applePayload || !applePayload.sub) {
                 void logAuthEvent(req, { method: 'apple', event: 'invalid_payload', ok: false, message: 'no sub in apple payload' });
-                return void res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+                return void res.redirect(failureRedirect());
             }
             const appleId = applePayload.sub;
             const appleEmail = applePayload.email;
@@ -846,13 +801,12 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
                 const token = await generateAuthToken((user as any)._id.toString(), 'web');
                 logger.log('✅ Apple OAuth token generated for:', (user as any).email);
                 void logAuthEvent(req, { method: 'apple', event: 'token_issued', ok: true, email: (user as any).email, userId: (user as any)._id?.toString(), message: `tokenLen=${token.length}` });
-                const returnTo = (req.session as any)?.oauthReturnTo;
                 delete (req.session as any).oauthReturnTo;
                 delete (req.session as any).oauthReturnLang;
                 // Re-validate returnTo (defence in depth — session could carry an
                 // unsanitized value from a legacy cookie). Use buildRedirectWithToken
                 // so existing query strings or fragments are preserved correctly.
-                if (returnTo && typeof returnTo === 'string' && returnTo.startsWith('/') && !returnTo.startsWith('//')) {
+                if (returnTo) {
                     void logAuthEvent(req, { method: 'apple', event: 'redirect_with_token', ok: true, email: (user as any).email, userId: (user as any)._id?.toString(), message: `to=${returnTo}` });
                     return void res.redirect(buildRedirectWithToken(frontendBase, returnTo, token));
                 }
@@ -862,13 +816,13 @@ export function registerUserAuthRoutes(app: Express, deps: any) {
             catch (tokenErr: any) {
                 logger.error('🍎 Apple OAuth token generation error:', tokenErr);
                 void logAuthEvent(req, { method: 'apple', event: 'token_generation_error', ok: false, email: (user as any)?.email, userId: (user as any)?._id?.toString(), message: tokenErr?.message || String(tokenErr) });
-                res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+                res.redirect(failureRedirect());
             }
         }
         catch (error: any) {
             logger.error('🍎 Apple OAuth callback error:', error);
             void logAuthEvent(req, { method: 'apple', event: 'unhandled_error', ok: false, message: error?.message || String(error) });
-            res.redirect(`${frontendBase}${langPrefix}/?error=apple_auth_failed`);
+            res.redirect(failureRedirect());
         }
     });
     // MOBILE AUTH: Google Sign-In with idToken (POST - for mobile apps)

@@ -17,8 +17,6 @@ export default function TvLogin() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const isLoggedIn = isAuthenticated && !!user;
 
-  console.log('[TV-LOGIN] 🖥️ render — authLoading:', authLoading, 'isAuthenticated:', isAuthenticated, 'user:', user?.email || '(null)', 'isLoggedIn:', isLoggedIn);
-
   // Auto-fill code from ?code=XXXXXX URL parameter (TV QR flow)
   const [autoActivatePending, setAutoActivatePending] = useState(false);
 
@@ -26,7 +24,6 @@ export default function TvLogin() {
     const params = new URLSearchParams(window.location.search);
     const urlCode = params.get('code');
     if (urlCode && /^\d{6}$/.test(urlCode)) {
-      console.log('[TV-LOGIN] 🔗 Auto-filling code from URL param');
       setCode(urlCode);
       setAutoActivatePending(true);
     }
@@ -92,9 +89,6 @@ export default function TvLogin() {
     const urlCode = new URLSearchParams(window.location.search).get('code');
     const returnUrl = urlCode ? `${langPrefix}/tv?code=${urlCode}` : `${langPrefix}/tv`;
     const targetUrl = `/api/auth/google?returnTo=${encodeURIComponent(returnUrl)}`;
-    console.log('[TV-LOGIN] 🟢 Google login button clicked');
-    console.log('[TV-LOGIN] 🍪 cookie BEFORE redirect:', document.cookie || '(empty)');
-    console.log('[TV-LOGIN] ➡️ Redirecting to:', targetUrl);
     window.location.href = targetUrl;
   };
 
