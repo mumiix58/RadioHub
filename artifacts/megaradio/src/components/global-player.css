@@ -7,10 +7,13 @@
 }
 
 .mini-player {
+  --mini-player-control-gap: 12px;
   container: mini-player / inline-size;
   height: 110px;
   color: white;
-  background: rgb(0 0 0 / 85%);
+  /* Figma's 85% black over its #e5e5e5 canvas appears #222. Keep that
+     contrast against the site's dark surface while retaining translucency. */
+  background: rgb(38 38 38 / 85%);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   font-family: 'Ubuntu', sans-serif;
@@ -44,11 +47,11 @@
 @keyframes mini-player-level { from { transform: scaleY(.45); } to { transform: scaleY(1); } }
 .mini-player-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 500; line-height: 18px; }
 .mini-player-track-row { display: flex; align-items: center; gap: 12px; min-width: 0; height: 26px; }
-.mini-player-track { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 300; line-height: 16px; }
+.mini-player-track { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 300; line-height: 16px; }
 .mini-player .mini-player-meta { flex-shrink: 0; gap: 9px; }
 .mini-player-deezer { display: block; position: relative; width: 26px; height: 26px; }
 .mini-player-deezer > img:last-child { position: absolute; left: 5px; top: 7px; }
-.mini-player-controls { display: flex; align-items: center; gap: 19px; }
+.mini-player-controls { display: flex; align-items: center; gap: 16px; }
 .mini-player-controls button { flex-shrink: 0; }
 .mini-player-favorite img { transform: translateY(1.17px); }
 .mini-player-volume { display: flex; align-items: center; gap: 22px; width: 256px; height: 50px; padding: 0 26px 0 10px; border-radius: 25px; background: black; }
@@ -71,9 +74,8 @@
 
 @media (min-width: 768px) {
  @container mini-player (max-width: 1199px) {
-  .mini-player-inner { gap: 16px; }
+  .mini-player-inner { --mini-player-control-gap: 10px; gap: 16px; }
   .mini-player-controls { gap: 12px; }
-  .mini-player-controls > div:first-child { gap: 10px !important; }
   .mini-player-volume { width: 150px; gap: 10px; padding-right: 14px; }
  }
 
@@ -83,7 +85,7 @@
 }
 
 @media (max-width: 767px) {
-  .mini-player { height: calc(104px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .mini-player { --mini-player-control-gap: 10px; height: calc(104px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); }
   .mini-player-inner { display: block; padding: 12px 16px; }
   .mini-player-station { gap: 24px; align-items: start; max-width: none; }
   .mini-player-copy { height: auto; padding-top: 0; padding-right: 28px; }
@@ -105,7 +107,7 @@
 @media (max-width: 359px) {
   .mini-player-station { gap: 16px; }
   .mini-player-controls { left: 104px; }
-  .mini-player-controls > div:first-child { gap: 6px !important; }
+  .mini-player-controls { --mini-player-control-gap: 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
