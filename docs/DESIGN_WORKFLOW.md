@@ -312,3 +312,47 @@ gerçek hesap işlemleri ve yayın oynatma bu tasarım kontrolünde denenmedi.
   doğrulandı; yatay taşma veya kontrollerle çakışma yok.
 - Kısa metin önizlemesi: `http://127.0.0.1:22508/tr?player-preview=1&short-title=1`.
   Örnek metadata yalnız `.local/mini-player-preview.tsx` içindedir.
+
+## 10 Ekim 2026 — Ana sayfa kayıt alanı ve footer ayrıntıları
+
+- Figma Web ana sayfa `1711:5258`, kayıt alanı `1711:7192`, footer
+  `1711:7200` ve mobil footer `2392:9506` güncel tasarımdan incelendi.
+- Kayıt alanının eksik kişi görseli Figma'dan yerel dosyaya alındı.
+  1206×298 px masaüstü ölçüsü, yeşil/mavi geçiş, 20 px köşeler, gölge,
+  Ubuntu tipografi ve görselin darken karışımı eşleştirildi. Mobilde metin
+  ve kayıt düğmesini kapatmayan duyarlı bir yerleşim uygulandı.
+- Facebook, Instagram ve Twitter Figma SVG'leri özgün 48×48 ölçüleriyle
+  `public/icons/footer/` altında tutulur. Aktif platformlar ve adresler
+  mevcut API'den gelir; YouTube gibi ek platformlar korunur. MXRTOKEN
+  bağlantısı kaldırıldı.
+- Dil seçicinin küre ikonu yerine etkin dilin kodunu gösteren küçük bir
+  rozet, daha belirgin grafit yüzey ve kısa açılış animasyonu eklendi.
+  Arama, Escape/odak dönüşü, dil yönlendirmesi ve reduced-motion korundu.
+- TypeScript, production build ve footer/dil geçişine ait dört dosyada
+  57 test başarılı. 320/375 px mobil, 768 px tablet ve 1512 px masaüstü
+  görünümleri kontrol edildi; yatay taşma yok.
+- İzole yerel önizleme: `http://127.0.0.1:22508/tr?footer-preview=1`.
+  Fixture yalnız `.local/` içindedir. Bu bölümün değişiklikleri henüz
+  canlıya yayımlanmadı.
+
+## 10 Ekim 2026 — Arama sonucu satırları ve kaydırma alanı
+
+- Kullanıcının canlı arama ekranındaki yorumu üzerine `591:4887` yeniden
+  incelendi. Mevcut sayaç şeridi, cam yüzey, ülke/bayrak ve beğeni bilgileri korundu.
+- Listenin 23 px yan ve 28 px alt dış boşlukları kaldırıldı; satır içeriğine
+  yatay/dikey padding verildi. Fare ve klavye vurgusu artık tüm satırı kaplar.
+  Sonuç alanı panelin alt köşesine kadar uzanır.
+- Kaydırma rayı sağdan 10 px, üstten/alttan 16 px içeride; beğeni sayısı için
+  ayrı boşluk bırakılır. Radix içerik tablosunun uzun adlarla listeyi genişletmesi
+  engellendi; metin doğal ellipsis kullanır.
+- 1431 px masaüstü, 375/320 px mobilde 20 sonuç, uzun radyo adı, ilk/son
+  satıra klavyeyle geçiş kontrol edildi. Yalnız sonuç listesi kaydı; sayfa y=0
+  kaldı ve yatay taşma görülmedi. İlgili 29 arama testi ve production build geçti.
+- Görseller `.local/design-checks/search-layout-desktop.png` ve
+  `search-layout-mobile.png`; önizleme verileri yalnız `.local/` içindedir.
+  Bu düzeltme henüz canlıya yayımlanmadı.
+- Takip yorumu sonrası 16 px üst/alt boşluk kaydırılan içeriğin dışına
+  taşındı: sayaç şeridine göre sabit kalır. 320 px sonuç alanında dört adet
+  72 px satır tam görünür. Masaüstü ve 375 px mobilde, listenin başında ve
+  sonunda eşit 16 px boşluk ölçüldü; 29 arama testi ve build tekrar geçti.
+  Son görseller: `search-insets-desktop.png`, `search-insets-mobile.png`.
