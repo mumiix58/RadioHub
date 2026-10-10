@@ -9,6 +9,7 @@ import { Link } from "wouter";
 import StationCard from "@/components/ui/station-card";
 import CatalogStationItems from '@/components/ads/CatalogStationItems';
 import HomeHeroPicture from '@/components/HomeHeroPicture';
+import HomeSignupBanner from '@/components/HomeSignupBanner';
 import HomeHeroCopy from '@/components/HomeHeroCopy';
 import StationCardSkeleton from "@/components/ui/station-card-skeleton";
 import GenreCardSkeleton from "@/components/ui/genre-card-skeleton";
@@ -1467,45 +1468,8 @@ export default function RadioFrontend({
 
         {/* LAYOUT WITH PROPER PADDING - EXACT from default.vue */}
         <div className="flex-1 w-full mx-auto">
-            {/* SIGNUP BANNER SECTION - EXACT from SignupBanner.vue with headphone image */}
             <div className="container pb-6">
-              <div 
-                className="relative my-6 sm:my-[50px] flex h-40 sm:h-[288px] flex-col justify-center overflow-hidden rounded-[20px] px-4 sm:px-6 md:px-[60px]"
-                style={{
-                  background: 'linear-gradient(to left, #41AFFF, #74EDB3)',
-                  boxShadow: '0px 26px 88px rgba(101, 219, 202, 0.33)'
-                }}
-                data-testid="signup-banner"
-              >
-                <h3 className="text-md z-10 font-bold sm:text-3xl text-white">
-                  {t('sign_up_for_more_features', 'Sign up for more features')}
-                </h3>
-                <p className="z-10 mb-8 text-base text-white">
-                  {t('favorites_recording_statistics_and_more', 'Favorites, recording, statistics and more')}
-                </p>
-
-                <Link 
-                  href={getLocalizedUrl('/signup')} 
-                  className="w-fit rounded-3xl bg-black hover:bg-gray-900 transition-colors py-3 px-6 text-sm font-bold sm:py-2.5 sm:text-base md:text-lg text-white z-10"
-                  data-testid="signup-banner-button"
-                >
-                  {t('sign_up', 'Sign Up')}
-                </Link>
-
-                {/* /images/headphone.webp was lost during the monorepo
-                    migration; hide gracefully on 404 instead of showing a
-                    broken-image icon in the Sign Up banner. */}
-                <img 
-                  loading="lazy"
-                  decoding="async"
-                  width={400}
-                  height={288}
-                  className="absolute -right-10 top-0 h-full sm:right-0 pointer-events-none" 
-                  src="/images/headphone.webp" 
-                  alt="Person wearing headphones enjoying music"
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                />
-              </div>
+              <HomeSignupBanner />
             </div>
 
           </div>

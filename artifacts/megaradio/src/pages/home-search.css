@@ -94,15 +94,25 @@
 }
 
 .home-search-results {
-  height: min(263px, calc(100dvh - 164px));
-  margin: 0 23px 28px;
+  --home-search-results-inset: 16px;
+  /* Four complete rows; the insets stay visible while the list scrolls. */
+  height: min(320px, calc(100dvh - 164px));
+  padding-block: var(--home-search-results-inset);
 }
 
 .home-search-results [data-radix-scroll-area-viewport] { overscroll-behavior: contain; }
-.home-search-results [data-radix-scroll-area-viewport] > div { padding-right: 28px; }
+.home-search-results [data-radix-scroll-area-viewport] > div {
+  /* Radix's table wrapper otherwise lets long station names widen the list. */
+  display: block !important;
+  width: 100%;
+}
 
 /* Show a persistent, draggable track whenever the results overflow, including on macOS. */
 .home-search-results [data-orientation='vertical'] {
+  top: var(--home-search-results-inset) !important;
+  right: 10px !important;
+  bottom: var(--home-search-results-inset) !important;
+  height: auto;
   width: 10px;
   padding: 1px;
   border: 0;
@@ -118,11 +128,11 @@
 
 .home-search-option {
   display: flex;
-  min-height: 64px;
+  width: 100%;
+  min-height: 72px;
   align-items: center;
   gap: 15px;
-  padding: 8px 0;
-  border-radius: 6px;
+  padding: 14px 36px 14px 23px;
   cursor: pointer;
 }
 
@@ -145,7 +155,6 @@
   .home-search-icon { left: 16px; top: 13px; }
   .home-search-close { top: 3px; right: 4px; }
   .home-search-count { padding-inline: 16px; }
-  .home-search-results { margin-inline: 16px; }
-  .home-search-option { gap: 12px; }
+  .home-search-option { gap: 12px; padding-left: 16px; }
   .home-search-station-name { font-size: 16px; line-height: 22px; }
 }
