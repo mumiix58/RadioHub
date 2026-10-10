@@ -9,7 +9,7 @@ import { BLOG_LABELS, isBlogLocale, blogPath } from '@workspace/seo-shared/blog-
 // 🚀 LAZY: modals only load on first open — keeps Radix Select/Input
 // out of the footer chunk until the user clicks the action.
 const AddYourStationModal = lazy(() => import("@/components/modals/AddYourStationModal"));
-import { Globe } from "lucide-react";
+import "./footer-controls.css";
 import AdSenseUnit from "@/components/ads/DeferredAdSenseUnit";
 import { getAdSensePageType } from '@/lib/adsense-runtime';
 import { AD_SLOTS, usesInlineMobileCatalogAd } from '@/lib/advertising-placements';
@@ -38,16 +38,19 @@ const platformColors: Record<string, string> = {
 
 const footerLinkClass = "inline-flex min-w-0 items-center min-h-11 md:min-h-[30px] py-1 text-left text-sm leading-5 text-[#c5c5cb] [overflow-wrap:anywhere] hyphens-auto hover:text-[#FF4199] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4199] focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-sm";
 
+const figmaSocialIcons: Record<string, string> = {
+  facebook: '/icons/footer/facebook.svg',
+  instagram: '/icons/footer/instagram.svg',
+  twitter: '/icons/footer/twitter.svg',
+};
+
 const getSocialIcon = (platform: string) => {
-  const svgClass = "w-4 h-4 sm:w-5 sm:h-5 fill-current";
+  if (figmaSocialIcons[platform]) {
+    return <img src={figmaSocialIcons[platform]} width={48} height={48} alt="" aria-hidden="true" loading="lazy" className={platform === 'instagram' ? 'translate-y-px' : undefined} />;
+  }
+  const svgClass = "w-6 h-6 fill-current";
   
   switch (platform) {
-    case 'facebook':
-      return <svg viewBox="0 0 24 24" className={svgClass}><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>;
-    case 'instagram':
-      return <svg viewBox="0 0 24 24" className={svgClass}><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.441 7.313c.05.001.101.001.152.001.865 0 1.567.702 1.567 1.567s-.702 1.567-1.567 1.567-1.567-.702-1.567-1.567.702-1.567 1.567-1.567c.051 0 .102 0 .152-.001zm-4.441 1.469c1.533 0 2.773 1.24 2.773 2.773s-1.24 2.773-2.773 2.773-2.773-1.24-2.773-2.773 1.24-2.773 2.773-2.773zm0-3.094c-3.213 0-5.867 2.654-5.867 5.867s2.654 5.867 5.867 5.867 5.867-2.654 5.867-5.867-2.654-5.867-5.867-5.867zm0-1.442c4.15 0 7.309-3.159 7.309-7.309S16.15 0 12 0 4.691 3.159 4.691 7.309 7.85 14.618 12 14.618zm0-11.636c2.003 0 3.644 1.641 3.644 3.644s-1.641 3.644-3.644 3.644-3.644-1.641-3.644-3.644 1.641-3.644 3.644-3.644z"/></svg>;
-    case 'twitter':
-      return <svg viewBox="0 0 24 24" className={svgClass}><path d="M23.953 4.57a10 10 0 002.856-9.51a6.044 6.044 0 01-1.685.494a2.975 2.975 0 001.304-1.643a5.975 5.975 0 01-1.905.729a2.98 2.98 0 00-5.304 2.735a8.48 8.48 0 01-6.144-3.115a2.98 2.98 0 00.923 3.977a2.964 2.964 0 01-1.35-.37v.037a2.98 2.98 0 002.391 2.921a2.971 2.971 0 01-1.344.055a2.982 2.982 0 002.782 2.07A5.975 5.975 0 010 16.738a8.477 8.477 0 004.564 1.336c5.477 0 8.268-4.534 8.268-8.469c0-.129-.003-.259-.009-.387a5.9 5.9 0 001.449-1.506l-.002-.001z"/></svg>;
     case 'linkedin':
       return <svg viewBox="0 0 24 24" className={svgClass}><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.475-2.236-1.986-2.236-1.081 0-1.722.731-2.004 1.438-.103.249-.129.597-.129.946v5.421h-3.554s.05-8.807 0-9.726h3.554v1.375c.427-.659 1.191-1.598 2.898-1.598 2.117 0 3.704 1.384 3.704 4.362v5.587zM5.337 9.433c-1.144 0-1.915-.758-1.915-1.708 0-.959.768-1.708 1.959-1.708 1.19 0 1.916.749 1.935 1.708 0 .95-.745 1.708-1.979 1.708zm1.946 11.019H3.394V9.726h3.889v10.726zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg>;
     case 'whatsapp':
@@ -400,23 +403,23 @@ export default function Footer() {
 
           {/* SOCIAL MEDIA LINKS - Responsive and bottom aligned with menu */}
           <div className="flex min-w-0 justify-start border-t border-white/10 pt-6 md:border-0 md:pt-0 md:justify-end md:col-span-3 md:self-end md:mb-[47px]">
-            <div className="flex min-w-0 flex-col items-start md:items-end">
-              <div className="mb-3 text-sm sm:text-base font-medium break-words md:text-right">
+            <div className="flex min-w-0 flex-col items-start">
+              <div className="mb-[14px] text-base font-medium leading-[19px] break-words">
                 {translationsLoading ? (
                   <div className="animate-pulse bg-gray-700 rounded h-5 w-28"></div>
                 ) : (
                   ft('footer_social_media', 'Share Mega Radio')
                 )}
               </div>
-              <div className="flex gap-2 sm:gap-3 flex-wrap justify-start md:justify-end">
+              <div className="flex gap-6 flex-wrap justify-start">
                 {socialLinks.filter(link => link.isActive !== false).map((link) => (
                   <a
                     key={link._id}
                     href={link.url}
                     target="_blank"
                     rel="noopener noreferrer nofollow"
-                    className="inline-flex items-center justify-center w-11 h-11 rounded-full border border-white/15 text-white transition-colors flex-shrink-0 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4199] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-                    style={{ backgroundColor: platformColors[link.platform] || '#FF4199' }}
+                    className="inline-flex items-center justify-center w-12 h-12 rounded-full text-white transition-opacity flex-shrink-0 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4199] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                    style={figmaSocialIcons[link.platform] ? undefined : { backgroundColor: platformColors[link.platform] || '#FF4199' }}
                     aria-label={link.platform}
                     title={link.platform}
                   >
@@ -424,20 +427,6 @@ export default function Footer() {
                   </a>
                 ))}
               </div>
-              
-              {/* MXRTOKEN Link */}
-              <a
-                href="https://mxrtoken.com"
-                target="_blank"
-                rel="noopener noreferrer nofollow"
-                className="mt-2 inline-flex min-h-11 items-center rounded-sm text-xs font-medium tracking-[.14em] text-[#b7b7bf] hover:text-[#FF4199] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4199]"
-                style={{ 
-                  fontFamily: 'Ubuntu, sans-serif',
-                  fontWeight: 600
-                }}
-              >
-                MXRTOKEN
-              </a>
             </div>
           </div>
         </div>
@@ -445,7 +434,7 @@ export default function Footer() {
         {/* COPYRIGHT & LANGUAGE SELECTOR - Below social media */}
         <div className="border-t border-white/10 pb-6 pt-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-5">
           {/* Language Selector */}
-          <div className="relative min-w-0 sm:shrink-0" ref={languageDropdownRef}>
+          <div className="relative min-w-0 w-fit max-w-full sm:shrink-0" ref={languageDropdownRef}>
             <button
               type="button"
               ref={languageTriggerRef}
@@ -455,10 +444,10 @@ export default function Footer() {
                 setIsLanguageDropdownOpen(open => !open);
                 setLanguageSearchQuery("");
               }}
-              className="flex min-h-12 w-full sm:w-auto items-center gap-3 px-4 py-3 rounded-xl bg-[#18181b] hover:bg-[#232327] border border-white/15 transition-colors text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4199]"
+              className="footer-language-trigger"
               data-testid="footer-language-selector"
             >
-              <Globe aria-hidden="true" className="w-4 h-4 shrink-0 text-[#FF4199]" />
+              <span aria-hidden="true" className="footer-language-code">{currentLangInfo?.code || 'en'}</span>
               <span className="min-w-0 flex-1 text-left text-white">{currentLangInfo?.name || 'English'}</span>
               <svg aria-hidden="true" className={`w-4 h-4 shrink-0 text-gray-400 transition-transform ${isLanguageDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -467,7 +456,7 @@ export default function Footer() {
             
             {/* Language Dropdown */}
             {isLanguageDropdownOpen && (
-              <div id={languageDropdownId} role="region" aria-label={t('search_language', 'Search language...')} className="absolute bottom-full mb-2 left-0 w-full sm:w-64 max-w-[calc(100vw_-_2rem)] max-h-[min(320px,60dvh)] flex flex-col bg-[#141416] border border-white/15 rounded-xl shadow-2xl overflow-hidden z-50">
+              <div id={languageDropdownId} role="region" aria-label={t('search_language', 'Search language...')} className="footer-language-panel absolute bottom-full mb-2 left-0 w-72 max-w-[calc(100vw_-_2rem)] max-h-[min(320px,60dvh)] flex flex-col border border-white/15 rounded-xl shadow-2xl overflow-hidden z-50">
                 <div className="p-2 border-b border-[#333]">
                   <input
                     type="text"
@@ -480,7 +469,7 @@ export default function Footer() {
                     data-testid="language-search-input"
                   />
                 </div>
-                <div className="min-h-0 overflow-y-auto overscroll-contain p-1">
+                <div className="footer-language-options min-h-0 overflow-y-auto overscroll-contain p-1">
                   {filteredLanguages.map((lang) => (
                     <button
                       type="button"
