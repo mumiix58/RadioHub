@@ -1,0 +1,62 @@
+/* A miniature tuning dial: its single pink index is the brand accent. */
+.discover-tuner-dial {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+}
+
+.discover-tuner-dial::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from -2deg, #747474 0deg 4deg, transparent 4deg 30deg);
+  mask-image: radial-gradient(circle, transparent 11px, #000 11.5px, #000 13px, transparent 13.5px);
+}
+
+.discover-tuner-knob {
+  position: absolute;
+  inset: 5px;
+  border: 1px solid #626262;
+  border-radius: 50%;
+  background: #292929;
+  transform: rotate(-40deg);
+  transition: transform 400ms cubic-bezier(.2, .7, .2, 1), border-color 200ms;
+}
+
+.discover-tuner-knob::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: calc(50% - 1px);
+  width: 2px;
+  height: 5px;
+  border-radius: 1px;
+  background: #ff4199;
+}
+
+.discover-tuner:is(:hover, :focus-visible) .discover-tuner-knob {
+  border-color: #aaa;
+  transform: rotate(50deg);
+}
+
+.discover-tuner:active .discover-tuner-knob {
+  transform: rotate(100deg);
+}
+
+.discover-tuner[aria-busy='true'] .discover-tuner-knob {
+  animation: discover-tune 600ms ease-in-out infinite alternate;
+}
+
+@keyframes discover-tune {
+  from { transform: rotate(-40deg); }
+  to { transform: rotate(140deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discover-tuner .discover-tuner-knob {
+    transition: none;
+    animation: none;
+  }
+}

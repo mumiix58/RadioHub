@@ -176,3 +176,117 @@ gerçek hesap işlemleri ve yayın oynatma bu tasarım kontrolünde denenmedi.
   Mevcut build chunk boyutu uyarıları sürüyor.
 - Ekran görüntüleri: `.local/design-checks/profile-comments-final.jpg` ve
   `.local/design-checks/profile-comments-mobile.jpg`.
+
+## 6 Ekim 2026 — Profil / Keşfet
+
+- Figma referansı: Web / `discover` (`2035:8058`), başlık `2035:8319`.
+  Başlık Ubuntu Bold 24 px, 28 px satır yüksekliği; masaüstü sol hizası 280 px.
+- Kullanıcının istediği sıra: günün saatine göre karşılama, Keşfet başlığı,
+  breadcrumb. Breadcrumb sayfa içeriğine taşındı; App seviyesindeki kopyası
+  kaldırıldı. Favoriler ile aynı 20 px üst boşluk kullanılıyor.
+- Figma'da bulunmayan mevcut "Beni şaşırt" eylemi, kullanıcının son geri
+  bildirimiyle çerçevesiz metin ve küçük analog radyo kadranı olarak tasarlandı.
+  Yaklaşık 107×36 px kontrolün 28 px kadranında tek pembe ibre bulunuyor;
+  hover/klavye odağında dönüyor, seçim sırasında tarama hareketi yapıyor.
+  Mobilde de Keşfet başlığının yanında. İşlev açıklaması title ve erişilebilir
+  açıklamada mevcut; metin ve ölçü sabit. İstasyon seçme/oynatma akışı korundu.
+- Gün mesajı ve eylem metinleri 14 dil için yerel fallback içeriyor; mevcut
+  dilin özel çevirileri öncelikli. Türkçe ekranda İngilizce gün mesajı önlendi.
+- Masaüstünde gün mesajı, başlık ve breadcrumb aynı x=280 sol hizasında.
+  390 px mobilde buton 107×36 px ve başlıkla aynı satırda. Yatay taşma yok.
+  Klavye odağı 2 px pembe dış çizgiyle görünür; görünür 36 px butonun
+  dokunma alanı 44 px yüksekliğe genişletildi. Kadran hareketi azaltılmış
+  hareket tercihine saygı gösteriyor.
+- TypeScript, frontend build ve 139 dosyadaki 2.010 test başarılı. Mevcut
+  build sourcemap/chunk uyarıları devam ediyor. Görsel kontrol yalnız yerel,
+  örnek API verileriyle yapıldı; bu değişiklik henüz yayımlanmadı.
+- Önizleme: `http://127.0.0.1:22508/tr/profil/ke%C5%9Ffet`.
+  Ekran görüntüleri: `.local/design-checks/discover-desktop.jpg` ve
+  `.local/design-checks/discover-mobile.jpg`. Kompakt revizyonun görselleri
+  `discover-compact-desktop.jpg` ve `discover-compact-mobile.jpg`; bu revizyon
+  TypeScript ve masaüstü/mobil görsel kontrolle doğrulandı.
+
+- Son kadran denemesi: `discover-tuner-desktop.jpg` ve
+  `discover-tuner-mobile.jpg`. TypeScript, klavye odağı ve mobil taşma
+  kontrolü başarılı; henüz canlıya yayımlanmadı.
+
+## 7 Ekim 2026 — Ana sayfa / header araması
+
+- Ana sayfadaki header merceği ve Ctrl+K / Cmd+K, mevcut hero aramasını
+  doğrudan sonuçları açık ve yazmaya odaklanmış durumda açar. Boş sorguda,
+  ana sayfa için yüklenen popüler istasyonların ilk altısı gösterilir;
+  iki karakterden itibaren mevcut arama servisi kullanılır.
+- Hero alanına doğrudan tıklama davranışı korunur: yazmaya başlamadan
+  sonuç listesi açılmaz. Diğer sayfalarda header'ın mevcut arama penceresi
+  kullanılır; hero henüz yüklenmemişse aynı pencereye geri dönülür.
+- Escape, kapatma düğmesi ve dış alan tıklaması aramayı kapatır ve odağı
+  açan kontrole döndürür. Ok tuşları ve Enter ile istasyon seçilebilir.
+  Temizlenen sorgunun gecikmiş yanıtları iptal edilerek sonuçlara karışması
+  önlendi. Mobilde açık arama ekranın üstünden 16 px boşluk bırakır;
+  sonuç listesinin yüksekliği görünür ekranla sınırlandırılır.
+- TypeScript kontrolü, production build ve 140 dosyadaki 2.021 test başarılı.
+  Ana sayfa/header arama davranışlarını doğrulayan 11 entegrasyon testi eklendi.
+  Masaüstünde fare, Ctrl+K, yazıp sonuç alma ve kapatma; 390 px mobilde
+  açık sonuçlar, giriş odağı ve yatay taşma yerel tarayıcıda doğrulandı.
+- Önizleme: `http://127.0.0.1:22508/tr`. Ekran görüntüleri:
+  `.local/design-checks/home-header-search-desktop.jpg` ve
+  `.local/design-checks/home-header-search-mobile.jpg`.
+  Önizleme örnek API verileri kullanır; bu değişiklik henüz yayımlanmadı.
+
+## 10 Ekim 2026 — Arama panelinin Figma eşleştirmesi
+
+- Referans: Web / home (`1711:5258`), açık arama instance'ı `1711:7199`,
+  `search` varyantı `591:4887`. Figma tasarım bağlamı ve görseli incelendi.
+- Panel 614×393 px, 20 px köşe, 2 px beyaz kenarlık, tek katman %20 beyaz
+  dolgu ve 10,5 px arka plan bulanıklığı kullanır. Tam sayfa karartma/bulanıklık,
+  sonuç satırlarının ayraçları ve ek dolgu katmanları kaldırıldı. Panelin
+  açılması hero başlığını veya arama girişini yukarı kaydırmaz.
+- Figma'nın 24 px mercek ve daire içindeki kapatma ikonları ile 615×2 px
+  ayırıcı SVG'si `public/icons/home-search/` altında yerel olarak saklandı.
+  Giriş ve istasyon adı 20 px Ubuntu Medium; sayaç 14 px, %50 beyaz.
+  Dinamik istasyon görselleri, ülke adı/bayrağı ve beğeni sayısı korunur.
+- Mevcut Radix ScrollArea bileşeni kullanıldı. 263 px sonuç alanında
+  taşma olduğunda 10 px beyaz ray ve gri sürüklenebilir tutamak kalıcı
+  görünür; fare ayrıldığında kaybolmaz. Kaydırma panel içinde kalır.
+- Masaüstünde boyut, cam değerleri ve yerel SVG'lerin yüklenmesi doğrulandı.
+  Kaydırma çubuğunu sürüklemek listeyi 121 px kaydırırken sayfa y=0 kaldı.
+  X ile kapatma ve Ctrl+K ile yeniden açma çalışıyor. 390 px mobilde panel
+  x=16, y=16, genişlik=358 px; yatay taşma yok, giriş odağı korunuyor.
+- Önizleme örnek API verileriyle `http://127.0.0.1:22508/tr` adresinde.
+  Bu görsel düzenleme henüz canlıya yayımlanmadı.
+- Son kullanıcı tercihi: yalnız sonuç sayacı canlı sürümdeki tamamlayıcı
+  şerit görünümüne döndürüldü: %20 beyaz dolgu, ince alt ayraç,
+  12 px beyaz büyük harfli metin. Diğer Figma düzenlemeleri korundu.
+
+## 10 Ekim 2026 — Web ve mobil alt-player
+
+- Figma'nın iki ayrı `alt-player` bileşeni doğrudan incelendi: web
+  `856:2842` (1512×110), mobil `1711:10123` (375×104). Canlı ana sayfada
+  oynatıcı açılarak mevcut görünümle karşılaştırıldı; inceleme sonunda yayın durduruldu.
+- Mini oynatıcıda önceki/sonraki, duraklatma, kalp, ses ve müzik servisi ikonları
+  Figma SVG'leriyle eşleştirildi (`public/icons/mini-player/`). Dinamik radyo
+  logosu ve bayrak, mevcut oy verme/paylaşma işlemleri ve küçültme oku korundu.
+- Radyo adı Ubuntu Medium 15 px, şarkı Ubuntu Light 14 px. Eksik 300 ağırlığı
+  Google Fonts'un Ubuntu Light dosyası ve Ubuntu Font Licence ile yerel eklendi.
+  Şarkı satırı webde en fazla 200 px, mobilde 174 px; tam metin title niteliğinde.
+- Web yükseklik 110 px, mobil 104 px; mobil kenar boşluğu 16 px ve üst boşluk
+  12 px. Ok ayrı bir alanda hizalanır. Mobil güvenli alt alan hesaba katılır.
+  Container query, profil yan menüsünden kalan alanı da dikkate alır.
+- Ses göstergesi sabit %43 yerine oynatıcıdaki gerçek volume değerini kullanır;
+  değişiklik doğrudan sağlayıcının setVolume işlevinden geçer.
+- TypeScript ve production build başarılı. Mevcut 140 dosya/2.021 test geçti;
+  ardından ses, küçültme, tam metin ve ortak kontrol davranışı için eklenen
+  dört regresyon dahil ilgili iki dosyada 56 test geçti.
+- Tarayıcıda 320/375 px mobil, 800 px web, 1280 px profil alanı ve 1512 px web
+  kontrol edildi: yatay taşma yok, SVG ölçüleri korunuyor, metinler kontrollere
+  taşmıyor; küçült/aç, durdur/çal ve klavyeden ses ayarı çalışıyor.
+- Yerel ve sessiz oynatma fixture'ı: `http://127.0.0.1:22508/tr?player-preview=1`.
+  Önizleme giriş noktası ve örnek veriler yalnız `.local/` altında; üretim
+  paketine dahil değildir. Bu değişiklikler henüz canlıya yayımlanmadı.
+  Görseller: `.local/design-checks/mini-player-desktop.png`,
+  `.local/design-checks/mini-player-mobile.png`.
+- Yayın öncesi kullanıcı tercihi: şarkı metninin yeni 200/174 px sınırları ve
+  metadata alanının ek genişlik kısıtı kaldırıldı. Metin kullanılabilir alanı
+  doldurur; yalnız kontrollere taşmasını önleyen doğal ellipsis korunur.
+  Önceki Keşfet, header/hero arama ve alt-player güncellemeleriyle birlikte
+  yayın talep edildi. 140 dosyada 2.025 test, TypeScript ve build geçti.

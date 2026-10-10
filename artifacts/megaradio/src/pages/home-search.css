@@ -1,0 +1,151 @@
+/* Figma Web / home / Component 1 (1711:7199): one 20% white glass layer. */
+.home-search-anchor {
+  position: relative;
+  z-index: 30;
+  width: min(614px, calc(100% - 32px));
+  height: 70px;
+  flex-shrink: 0;
+}
+
+.home-search-anchor--open { z-index: 999999; }
+
+.home-search-dismiss {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.home-search-panel {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 1;
+  overflow: hidden;
+  border: 2px solid #fff;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 20%);
+  backdrop-filter: blur(10.5px);
+  -webkit-backdrop-filter: blur(10.5px);
+  color: #fff;
+  font-family: 'Ubuntu', system-ui, sans-serif;
+}
+
+.home-search-input-row {
+  position: relative;
+  height: 66px;
+}
+
+.home-search-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 66px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  font: 500 20px/1.2 'Ubuntu', system-ui, sans-serif;
+  outline: none;
+  box-shadow: none;
+}
+
+.home-search-input::placeholder { color: rgb(255 255 255 / 70%); }
+.home-search-panel:not(.home-search-panel--open):focus-within { outline: 2px solid #ff4199; outline-offset: 2px; }
+
+.home-search-icon {
+  position: absolute;
+  left: 23px;
+  top: 21px;
+  pointer-events: none;
+}
+
+.home-search-close {
+  position: absolute;
+  top: 11px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+
+.home-search-close:hover { background: rgb(255 255 255 / 10%); }
+.home-search-close:focus-visible { outline: 2px solid #ff4199; outline-offset: -2px; }
+
+.home-search-divider {
+  position: absolute;
+  left: -2px;
+  bottom: -1px;
+  max-width: none;
+  pointer-events: none;
+}
+
+.home-search-count {
+  margin: 0;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgb(209 213 219 / 30%);
+  background: rgb(255 255 255 / 20%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.home-search-results {
+  height: min(263px, calc(100dvh - 164px));
+  margin: 0 23px 28px;
+}
+
+.home-search-results [data-radix-scroll-area-viewport] { overscroll-behavior: contain; }
+.home-search-results [data-radix-scroll-area-viewport] > div { padding-right: 28px; }
+
+/* Show a persistent, draggable track whenever the results overflow, including on macOS. */
+.home-search-results [data-orientation='vertical'] {
+  width: 10px;
+  padding: 1px;
+  border: 0;
+  border-radius: 20px;
+  background: #fff;
+}
+
+.home-search-results [data-orientation='vertical'] > div {
+  min-height: 31px;
+  border-radius: 20px;
+  background: #bababa;
+}
+
+.home-search-option {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.home-search-option--highlighted { background: rgb(255 255 255 / 10%); }
+.home-search-station-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+@media (max-width: 639px) {
+  .home-search-anchor { height: 54px; }
+  .home-search-anchor--open { position: fixed; top: 16px; left: 16px; right: 16px; }
+  .home-search-input-row { height: 50px; }
+  .home-search-input { padding-inline: 52px; font-size: 16px; }
+  .home-search-icon { left: 16px; top: 13px; }
+  .home-search-close { top: 3px; right: 4px; }
+  .home-search-count { padding-inline: 16px; }
+  .home-search-results { margin-inline: 16px; }
+  .home-search-option { gap: 12px; }
+  .home-search-station-name { font-size: 16px; line-height: 22px; }
+}

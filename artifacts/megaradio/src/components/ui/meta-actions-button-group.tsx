@@ -13,9 +13,11 @@ interface MetaActionsButtonGroupProps {
   className?: string;
   iconSize?: number;
   hideChromecast?: boolean;
+  appearance?: 'default' | 'mini-player';
 }
 
-export default function MetaActionsButtonGroup({ className, iconSize = 26, hideChromecast = false }: MetaActionsButtonGroupProps) {
+export default function MetaActionsButtonGroup({ className, iconSize = 26, hideChromecast = false, appearance = 'default' }: MetaActionsButtonGroupProps) {
+  const miniPlayer = appearance === 'mini-player';
   const { stationMeta, currentStation } = useGlobalPlayer();
   const { getLocalizedUrl } = useSeoRouting();
   const { toast } = useToast();
@@ -144,7 +146,7 @@ export default function MetaActionsButtonGroup({ className, iconSize = 26, hideC
         title="Find on YouTube"
         data-testid="youtube-search-button"
       >
-        <img src={youtubeIcon} alt="YouTube" style={{ width: iconSize, height: iconSize }} />
+        <img src={miniPlayer ? '/icons/mini-player/youtube.svg' : youtubeIcon} alt="YouTube" style={miniPlayer ? undefined : { width: iconSize, height: iconSize }} />
       </button>
 
       {/* 2. Spotify Search Button */}
@@ -154,7 +156,7 @@ export default function MetaActionsButtonGroup({ className, iconSize = 26, hideC
         title="Find on Spotify"
         data-testid="spotify-search-button"
       >
-        <img src={spotifyIcon} alt="Spotify" style={{ width: iconSize, height: iconSize }} />
+        <img src={miniPlayer ? '/icons/mini-player/spotify.svg' : spotifyIcon} alt="Spotify" style={miniPlayer ? undefined : { width: iconSize, height: iconSize }} />
       </button>
 
       {/* 3. Deezer Search Button */}
@@ -164,7 +166,10 @@ export default function MetaActionsButtonGroup({ className, iconSize = 26, hideC
         title="Find on Deezer"
         data-testid="deezer-search-button"
       >
-        <img src={deezerIcon} alt="Deezer" style={{ width: iconSize, height: iconSize }} />
+        {miniPlayer ? <span className="mini-player-deezer">
+          <img src="/icons/mini-player/deezer-background.svg" alt="Deezer" />
+          <img src="/icons/mini-player/deezer-mark.svg" alt="" aria-hidden="true" />
+        </span> : <img src={deezerIcon} alt="Deezer" style={{ width: iconSize, height: iconSize }} />}
       </button>
 
       {/* 4. Chromecast Button */}

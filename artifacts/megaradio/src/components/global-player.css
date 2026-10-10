@@ -1,0 +1,113 @@
+@font-face {
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/ubuntu-300.ttf') format('truetype');
+}
+
+.mini-player {
+  container: mini-player / inline-size;
+  height: 110px;
+  color: white;
+  background: rgb(0 0 0 / 85%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-family: 'Ubuntu', sans-serif;
+}
+
+.mini-player-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 32px;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 1254px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.mini-player-station { display: flex; align-items: center; gap: 22px; min-width: 0; }
+.mini-player-artwork { position: relative; flex: 0 0 72px; }
+.mini-player .mini-player-logo { width: 72px; height: 72px; border-radius: 7.2px; }
+.mini-player-flag { position: absolute; right: -10px; bottom: -9px; width: 24px; height: 24px; border-radius: 50%; object-fit: cover; }
+.mini-player-copy { flex: 1; min-width: 0; height: 72px; padding-top: 5px; }
+.mini-player-equalizer { display: flex; align-items: end; gap: 2px; height: 20px; width: 19px; margin-bottom: 9px; }
+.mini-player-equalizer i { display: block; width: 5px; height: 20px; border-radius: 10px; background: #ff4199; transform-origin: bottom; }
+.mini-player-equalizer i:nth-child(2) { height: 14px; }
+.mini-player-equalizer i:nth-child(3) { height: 17px; }
+.mini-player-equalizer--playing i { animation: mini-player-level 1s ease-in-out infinite alternate; }
+.mini-player-equalizer--playing i:nth-child(2) { animation-delay: -0.6s; }
+.mini-player-equalizer--playing i:nth-child(3) { animation-delay: -0.3s; }
+@keyframes mini-player-level { from { transform: scaleY(.45); } to { transform: scaleY(1); } }
+.mini-player-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 500; line-height: 18px; }
+.mini-player-track-row { display: flex; align-items: center; gap: 12px; min-width: 0; height: 26px; }
+.mini-player-track { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 300; line-height: 16px; }
+.mini-player .mini-player-meta { flex-shrink: 0; gap: 9px; }
+.mini-player-deezer { display: block; position: relative; width: 26px; height: 26px; }
+.mini-player-deezer > img:last-child { position: absolute; left: 5px; top: 7px; }
+.mini-player-controls { display: flex; align-items: center; gap: 19px; }
+.mini-player-controls button { flex-shrink: 0; }
+.mini-player-favorite img { transform: translateY(1.17px); }
+.mini-player-volume { display: flex; align-items: center; gap: 22px; width: 256px; height: 50px; padding: 0 26px 0 10px; border-radius: 25px; background: black; }
+.mini-player-volume > img { flex-shrink: 0; }
+.mini-player-volume-track { position: relative; flex: 1; min-width: 0; height: 10px; border-radius: 10px; background: white; }
+.mini-player-volume-fill { position: absolute; inset: 0 auto 0 0; background: #ff4199; border-radius: inherit; pointer-events: none; }
+.mini-player-volume input { position: absolute; inset: -17px 0; width: 100%; height: 44px; margin: 0; opacity: 0; cursor: pointer; }
+.mini-player-volume-track:focus-within { outline: 2px solid white; outline-offset: 4px; }
+.mini-player-toggle { position: relative; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgb(255 255 255 / 10%); color: #d3d3d3; }
+.mini-player-toggle::before { content: ''; position: absolute; inset: -6px; }
+.mini-player-toggle:hover { background: rgb(255 255 255 / 17%); color: white; }
+.mini-player button:focus-visible, .mini-player-name:focus-visible { outline: 2px solid #ff4199; outline-offset: 3px; }
+.mini-player--collapsed { height: 79px; }
+.mini-player--collapsed .mini-player-inner { grid-template-columns: minmax(0, 1fr) 32px; }
+.mini-player--collapsed .mini-player-station { max-width: none; }
+.mini-player--collapsed .mini-player-copy { height: auto; padding-top: 0; }
+.mini-player--collapsed .mini-player-artwork { flex-basis: 46px; }
+.mini-player--collapsed .mini-player-logo { width: 46px; height: 46px; }
+.mini-player--collapsed .mini-player-flag { width: 18px; height: 18px; right: -5px; bottom: -4px; }
+
+@media (min-width: 768px) {
+ @container mini-player (max-width: 1199px) {
+  .mini-player-inner { gap: 16px; }
+  .mini-player-controls { gap: 12px; }
+  .mini-player-controls > div:first-child { gap: 10px !important; }
+  .mini-player-volume { width: 150px; gap: 10px; padding-right: 14px; }
+ }
+
+ @container mini-player (max-width: 959px) {
+  .mini-player-volume { display: none; }
+ }
+}
+
+@media (max-width: 767px) {
+  .mini-player { height: calc(104px + env(safe-area-inset-bottom, 0px)); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  .mini-player-inner { display: block; padding: 12px 16px; }
+  .mini-player-station { gap: 24px; align-items: start; max-width: none; }
+  .mini-player-copy { height: auto; padding-top: 0; padding-right: 28px; }
+  .mini-player-flag { right: -4px; bottom: -6px; width: 18px; height: 18px; }
+  .mini-player-equalizer, .mini-player .mini-player-meta, .mini-player-volume { display: none; }
+  .mini-player-track-row { height: 18px; margin-top: 5px; }
+  .mini-player-controls { position: absolute; left: 112px; bottom: 10px; }
+  .mini-player-controls button { position: relative; }
+  .mini-player-controls button::before { content: ''; position: absolute; inset: -5px; }
+  .mini-player-favorite img { transform: translateY(.78px); }
+  .mini-player-toggle { position: absolute; right: 12px; top: 9px; width: 24px; height: 24px; }
+  .mini-player-toggle::before { inset: -10px; }
+  .mini-player--collapsed { height: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  .mini-player--collapsed .mini-player-inner { padding-top: 9px; padding-bottom: 9px; }
+  .mini-player--collapsed .mini-player-station { gap: 16px; }
+  .mini-player--collapsed .mini-player-toggle { top: 20px; }
+}
+
+@media (max-width: 359px) {
+  .mini-player-station { gap: 16px; }
+  .mini-player-controls { left: 104px; }
+  .mini-player-controls > div:first-child { gap: 6px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mini-player-equalizer--playing i { animation: none; }
+}

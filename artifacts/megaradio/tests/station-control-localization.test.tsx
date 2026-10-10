@@ -28,8 +28,8 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); client.clear(); });
 const missing = (_key: string, fallback: string) => fallback;
-const wrap = (labels: ReturnType<typeof getStationControlLabels>) =>
-  <QueryClientProvider client={client}><StationControlButtonGroup currentPageStation={station} labels={labels} /></QueryClientProvider>;
+const wrap = (labels: ReturnType<typeof getStationControlLabels>, appearance: 'default' | 'mini-player' = 'default') =>
+  <QueryClientProvider client={client}><StationControlButtonGroup currentPageStation={station} labels={labels} appearance={appearance} /></QueryClientProvider>;
 
 it.each(ACTIVE_SITEMAP_LANGUAGES)('%s controls and image text have same-language fallbacks without adding translation observers', language => {
   const labels = getStationControlLabels(language);
@@ -48,12 +48,12 @@ it.each(ACTIVE_SITEMAP_LANGUAGES)('%s controls and image text have same-language
   expect(alt).not.toContain('Listen ');
 });
 
-it('honors existing Turkish dictionary values and retains play/previous/next/vote operations', async () => {
+it.each(['default', 'mini-player'] as const)('%s retains Turkish labels and play/previous/next/vote operations', async appearance => {
   const dictionary: Record<string, string> = { player_play_station: 'İstasyonu Çal', player_stop: 'Durdur',
     previous: 'Önceki', next: 'İleri', button_share_station: 'İstasyonu Paylaş', general_close: 'Kapat' };
   const labels = getStationControlLabels('tr', dictionary);
   expect(labels.share).toBe('İstasyonu Paylaş'); expect(labels.vote).toBe('Bu istasyona oy ver');
-  const view = render(wrap(labels));
+  const view = render(wrap(labels, appearance));
   fireEvent.click(screen.getByRole('button', { name: 'İstasyonu Çal' }));
   expect(state.playStation).toHaveBeenCalledWith(station);
   fireEvent.click(screen.getByRole('button', { name: 'Önceki' }));
@@ -61,7 +61,7 @@ it('honors existing Turkish dictionary values and retains play/previous/next/vot
   expect(state.previousStation).toHaveBeenCalledTimes(1); expect(state.nextStation).toHaveBeenCalledTimes(1);
   fireEvent.click(screen.getByRole('button', { name: labels.vote }));
   await waitFor(() => expect(state.apiRequest).toHaveBeenCalledWith('POST', '/api/stations/fixture-radio/vote'));
-  state.isPlaying = true; state.currentStation = station; view.rerender(wrap(labels));
+  state.isPlaying = true; state.currentStation = station; view.rerender(wrap(labels, appearance));
   fireEvent.click(screen.getByRole('button', { name: 'Durdur' }));
   expect(state.pauseStation).toHaveBeenCalledTimes(1);
 });
