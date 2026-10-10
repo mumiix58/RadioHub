@@ -18,6 +18,7 @@ const AddYourStationModal = lazy(() => import("@/components/modals/AddYourStatio
 const MobileNavigation = lazy(() => import('./mobile-navigation'));
 const QuickSearchDialog = lazy(() => import('./quick-search-dialog'));
 import { getQuickSearchCopy } from '@/lib/quick-search-copy';
+import { requestHomeSearch } from '@/lib/home-search';
 import { useTranslation } from "@/hooks/useTranslation";
 import { getProfileNavCopy } from '@/lib/profile-nav-copy';
 import { logoutAccount } from '@/lib/logout';
@@ -112,8 +113,12 @@ export default function RadioHeader({
     setIsCountryDropdownOpen(false);
     setIsNotificationDropdownOpen(false);
     setIsMobileProfileMenuOpen(false);
+    if (cleanPath === '/' && requestHomeSearch(searchReturnFocusRef.current)) {
+      setIsSearchOpen(false);
+      return;
+    }
     setIsSearchOpen(true);
-  }, [showSearch]);
+  }, [showSearch, cleanPath]);
 
   useEffect(() => {
     if (!showSearch) return;

@@ -8,7 +8,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from '@/hooks/useTranslation';
 import { getProfileNavCopy } from '@/lib/profile-nav-copy';
-import { PROFILE_CONTENT_INSET, isProfileFavoritesPath } from '@/lib/profile-layout';
+import { PROFILE_CONTENT_INSET, hasProfileContentBreadcrumbs } from '@/lib/profile-layout';
 import { ProfileNavIcon } from './profile-nav-icon';
 
 function NavLink({ href, children, isActive }: { href: string; children: React.ReactNode; isActive: boolean }) {
@@ -161,7 +161,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
         {/* Main Content Area - full width with sidebar offset */}
         <div className={`relative w-full ${isMessagesPage ? 'h-full min-h-0' : ''}`}>
           <div className={`w-full bg-[#0E0E0E] ${isMessagesPage ? 'h-full min-h-0 lg:pl-[250px]' : ''}`}>
-            <div className={isMessagesPage ? 'h-full min-h-0' : `${PROFILE_CONTENT_INSET} ${isProfileFavoritesPath(englishPath) ? 'pt-5 pb-8' : 'py-8'}`}>
+            <div className={isMessagesPage ? 'h-full min-h-0' : `${PROFILE_CONTENT_INSET} ${hasProfileContentBreadcrumbs(englishPath) ? 'pt-5 pb-8' : 'py-8'}`}>
               {children}
             </div>
           </div>

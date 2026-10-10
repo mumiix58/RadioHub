@@ -7,14 +7,19 @@ import { FreeMode, Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/free-mode';
 import 'swiper/css/navigation';
+import './profile-discover.css';
 import StationsGrid from "@/components/ui/stations-grid";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useGlobalPlayer } from "@/hooks/useGlobalPlayer";
 import { useSeoRouting } from "@/hooks/useSeoRouting";
-import { Shuffle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { COUNTRY_TO_LANGUAGE } from "@workspace/seo-shared/seo-config";
 import { getPrecomputedStationsSlice } from '@/lib/precomputed-pool';
+import { RouteBreadcrumbs } from '@/components/RouteBreadcrumbs';
+import { Button } from '@/components/ui/button';
+import { getProfileNavCopy } from '@/lib/profile-nav-copy';
+import { getProfileDiscoverCopy } from '@/lib/profile-discover-copy';
 
 // Genre background gradients - same as homepage
 const getRandomImage = (index: number) => {
@@ -96,7 +101,11 @@ function getTimeBasedGreeting(): { greeting: string; period: 'morning' | 'aftern
 
 export default function ProfileDiscover() {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language, localeTranslations } = useTranslation();
+  const copy = getProfileDiscoverCopy(language, localeTranslations);
+  const discoverTitle = localeTranslations?.user_menu_discover?.trim();
+  const title = discoverTitle && !(language !== 'en' && discoverTitle === 'Discover')
+    ? discoverTitle : getProfileNavCopy(language).discover;
   const { playStation } = useGlobalPlayer();
   const { getLocalizedUrl } = useSeoRouting();
   const [location] = useLocation();
@@ -291,38 +300,40 @@ export default function ProfileDiscover() {
 
   return (
     <div>
-      {/* COMPACT GREETING + SURPRISE ME - Mega Style (TOP) */}
-      <section className="mb-[16px]">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-lg shrink-0">{timeInfo.icon}</span>
-            <h2 className="text-[18px] sm:text-[20px] font-semibold text-white truncate">
-              {t(`greeting_${timeInfo.period}`, timeInfo.greeting)}
-              {firstName && <span className="text-[#FF4199]">, {firstName}</span>}
-            </h2>
-          </div>
-          
-          <button
+      <header className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3">
+          <p className="col-span-2 mb-2 flex items-center gap-2 text-sm leading-5 text-[#AFAFAF]" data-testid="discover-greeting">
+            <span aria-hidden="true" className="shrink-0 text-base">{timeInfo.icon}</span>
+            <span className="min-w-0 break-words">
+              {copy[`greeting_${timeInfo.period}`]}
+              {firstName && <span>, {firstName}</span>}
+            </span>
+          </p>
+          <h1 className="text-2xl font-bold leading-7 text-white">{title}</h1>
+
+          <Button
+            type="button"
+            variant="ghost"
             onClick={handleSurpriseMe}
             disabled={isShuffling || (globalStationsRaw.length === 0 && localStationsRaw.length === 0)}
-            className={`
-              flex items-center gap-1.5
-              px-3 py-1.5 sm:px-4 sm:py-2
-              rounded-[8px] font-medium text-white text-[13px] sm:text-[14px]
-              bg-[#FF4199] hover:bg-[#FF097B]
-              transition-colors duration-200
-              disabled:opacity-50 disabled:cursor-not-allowed
-              shrink-0
-              ${isShuffling ? 'animate-pulse' : ''}
-            `}
+            aria-busy={isShuffling}
+            aria-labelledby="discover-surprise-label"
+            aria-describedby="discover-surprise-hint"
+            title={copy.discover_surprise_hint}
+            className="discover-tuner relative h-9 w-fit max-w-[200px] gap-2 justify-self-end whitespace-normal rounded-sm bg-transparent px-1 py-1 text-[13px] font-medium leading-4 text-[#BDBDBD] after:absolute after:-inset-y-1 after:inset-x-0 hover:bg-transparent hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#FF4199]"
             data-testid="button-surprise-me"
           >
-            <Shuffle className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isShuffling ? 'animate-spin' : ''}`} />
-            <span className="hidden sm:inline">{t('surprise_me', 'Surprise Me')}</span>
-            <span className="sm:hidden">{t('surprise', 'Surprise')}</span>
-          </button>
-        </div>
-      </section>
+            <span id="discover-surprise-label">{copy.surprise_me}</span>
+            <span aria-hidden="true" className="discover-tuner-dial">
+              <span className="discover-tuner-knob" />
+            </span>
+            <span id="discover-surprise-hint" className="sr-only" aria-live="polite">
+              {isShuffling ? copy.discover_tuning : copy.discover_surprise_hint}
+            </span>
+          </Button>
+          <div className="col-span-2 min-w-0">
+            <RouteBreadcrumbs placement="content" />
+          </div>
+      </header>
 
       {/* GENRES SLIDER - Gradient boxes like homepage */}
       {genres.length > 0 && (

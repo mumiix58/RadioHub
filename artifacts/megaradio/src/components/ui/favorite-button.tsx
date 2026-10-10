@@ -20,9 +20,11 @@ interface FavoriteButtonProps {
   size?: 'default' | 'mobile';
   iconSizeOverride?: string; // Override icon size for mini player
   borderWidth?: string; // Override border width
+  appearance?: 'default' | 'mini-player';
 }
 
-const FavoriteButton = memo(function FavoriteButton({ stationId, className = "", customIcon, size = 'default', iconSizeOverride, borderWidth = '1.5px' }: FavoriteButtonProps) {
+const FavoriteButton = memo(function FavoriteButton({ stationId, className = "", customIcon, size = 'default', iconSizeOverride, borderWidth = '1.5px', appearance = 'default' }: FavoriteButtonProps) {
+  const miniPlayer = appearance === 'mini-player';
   // Figma: mobile icon 18.74x18.74, default icon 24x24
   const iconSize = iconSizeOverride || (size === 'mobile' ? '18.74px' : '24px');
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -215,7 +217,7 @@ const FavoriteButton = memo(function FavoriteButton({ stationId, className = "",
       <button
         onClick={handleFavoriteClick}
         disabled={isLoading}
-        className={`relative flex items-center justify-center rounded-full border-black hover:border-[#FF4199] bg-black transition-colors ${className}`}
+        className={`relative flex items-center justify-center rounded-full ${miniPlayer ? 'mini-player-favorite border-white/[0.17] bg-white/10 hover:border-[#FF4199]' : 'border-black hover:border-[#FF4199] bg-black'} transition-colors ${className}`}
         style={{ borderWidth, borderStyle: 'solid' }}
         title={favoriteLabel}
         aria-label={favoriteLabel}
@@ -228,10 +230,10 @@ const FavoriteButton = memo(function FavoriteButton({ stationId, className = "",
             src={customIcon || fav60Icon} 
             alt=""
             aria-hidden="true"
-            className={`transition-all ${!iconSizeOverride && size === 'default' && customIcon ? 'w-full h-full' : !iconSizeOverride && size === 'default' ? 'w-5 h-5 sm:w-6 sm:h-6' : ''}`}
+            className={`transition-all ${miniPlayer ? '' : !iconSizeOverride && size === 'default' && customIcon ? 'w-full h-full' : !iconSizeOverride && size === 'default' ? 'w-5 h-5 sm:w-6 sm:h-6' : ''}`}
             style={{
-              ...(iconSizeOverride ? { width: iconSizeOverride, height: iconSizeOverride } : size === 'mobile' ? { width: '18.74px', height: '18.74px' } : {}),
-              filter: isFavorited ? 'brightness(0) saturate(100%) invert(47%) sepia(95%) saturate(2054%) hue-rotate(310deg) brightness(101%) contrast(101%)' : 'none',
+              ...(miniPlayer ? {} : iconSizeOverride ? { width: iconSizeOverride, height: iconSizeOverride } : size === 'mobile' ? { width: '18.74px', height: '18.74px' } : {}),
+              filter: miniPlayer ? (isFavorited ? 'none' : 'brightness(0) invert(1)') : isFavorited ? 'brightness(0) saturate(100%) invert(47%) sepia(95%) saturate(2054%) hue-rotate(310deg) brightness(101%) contrast(101%)' : 'none',
               opacity: isFavorited ? 1 : 0.7
             }}
           />

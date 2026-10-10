@@ -7,7 +7,7 @@ const state = vi.hoisted(() => ({
   player: {
     currentStation: { _id: 'one', slug: 'radio-one', name: 'Radio One', country: 'Germany' } as any,
     isPlaying: true,
-    stationMeta: null,
+    stationMeta: null as any, volume: .6, setVolume: vi.fn(),
     pauseStation: vi.fn(), stopStation: vi.fn(), resumeStation: vi.fn(),
     playStation: vi.fn(), previousStation: vi.fn(), nextStation: vi.fn(),
   },
@@ -44,7 +44,7 @@ beforeEach(async () => {
   Object.assign(state.auth, { isAuthenticated: false, isLoading: false, error: null });
   Object.assign(state.player, {
     currentStation: { _id: 'one', slug: 'radio-one', name: 'Radio One', country: 'Germany' },
-    isPlaying: true,
+    isPlaying: true, stationMeta: null, volume: .6,
   });
   state.path = '/';
   state.mobile = false;
@@ -294,4 +294,35 @@ it('retains Later when storage writes succeed but subsequent reads fail', () => 
   const second = renderHook(() => policy.useSignupPrompt({ eligible: true, delayMs: 1000 }));
   advance(policy.SIGNUP_MODAL_DELAY_MS * 2);
   expect(second.result.current.isOpen).toBe(false);
+});
+
+
+it('mini-player volume uses shared playback state and updates its provider', () => {
+  state.auth.isAuthenticated = true;
+  const view = render(<GlobalPlayer />);
+  const volume = screen.getByRole('slider', { name: 'Volume' });
+  expect(volume).toHaveValue('60');
+  fireEvent.change(volume, { target: { value: '25' } });
+  expect(state.player.setVolume).toHaveBeenCalledWith(.25);
+  state.player.volume = .25;
+  view.rerender(<GlobalPlayer />);
+  expect(volume).toHaveValue('25');
+});
+
+it.each([false, true])('mini-player collapse preserves playback and exposes full truncated metadata (mobile=%s)', mobile => {
+  state.mobile = mobile;
+  state.auth.isAuthenticated = true;
+  const name = 'A very long radio station name for the compact player';
+  const title = 'A very long track title that must not overlap the player controls';
+  state.player.currentStation = { ...state.player.currentStation, name };
+  state.player.stationMeta = { artist: 'Artist', title };
+  render(<GlobalPlayer />);
+  expect(screen.getByTitle(name)).toHaveAttribute('href', '/en/station/radio-one');
+  expect(screen.getByTitle(`Artist - ${title}`)).toHaveTextContent(title);
+  fireEvent.click(screen.getByRole('button', { name: 'Collapse player' }));
+  expect(screen.getByRole('button', { name: 'Expand player' })).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.getByTitle(`Artist - ${title}`)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Expand player' }));
+  expect(screen.getByRole('button', { name: 'Collapse player' })).toHaveAttribute('aria-expanded', 'true');
+  expect(state.player.isPlaying).toBe(true);
 });

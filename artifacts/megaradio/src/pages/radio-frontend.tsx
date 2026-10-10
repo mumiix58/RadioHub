@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense, lazy } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { homeStationPageOptions, selectPopularHomeStations } from '@/lib/home-station-query';
+import { OPEN_HOME_SEARCH, type HomeSearchOpenEvent } from '@/lib/home-search';
 import { stationQueryFreshness } from '@/lib/station-query-policy';
 import { useAvailableStationSnapshots } from '@/hooks/useAvailableStationSnapshots';
 import { fetchStationCardList } from '@/lib/station-card-list-request';
@@ -20,6 +21,8 @@ import { apiRequest, getQueryFn } from '@/lib/queryClient';
 import { communityDisplayName, communityFavoriteCount, communityLabels, type CommunityProfile } from '@/lib/community-profile';
 import { PublicProfileAvatar } from '@/components/ui/public-profile-avatar';
 import { MapPin, ChevronLeft, ChevronRight, ThumbsUp, Heart } from "lucide-react";
+import { ScrollArea } from '@/components/ui/scroll-area';
+import './home-search.css';
 
 // Format vote count to K/M format (9.3K, 1.2M, etc.)
 const formatVoteCount = (count: number): string => {
@@ -295,6 +298,40 @@ export default function RadioFrontend({
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [filteredStations, setFilteredStations] = useState<any[]>([]);
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const heroSearchInputRef = useRef<HTMLInputElement>(null);
+  const heroSearchReturnFocusRef = useRef<HTMLElement | null>(null);
+  const hasSearchTerm = searchQuery.trim().length >= 2;
+  const isHeroSearchOpen = showSearchSuggestions || hasSearchTerm;
+
+  const closeHeroSearch = useCallback((restoreFocus = true) => {
+    setShowSearchSuggestions(false);
+    setSearchQuery('');
+    setDebouncedSearchQuery('');
+    setFilteredStations([]);
+    if (restoreFocus && heroSearchReturnFocusRef.current?.isConnected) {
+      heroSearchReturnFocusRef.current.focus({ preventScroll: true });
+    }
+    heroSearchReturnFocusRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const open = (event: Event) => {
+      const input = heroSearchInputRef.current;
+      if (!input) return;
+      event.preventDefault();
+      heroSearchReturnFocusRef.current = (event as HomeSearchOpenEvent).detail.returnFocusTo;
+      setShowSearchSuggestions(true);
+      const bounds = input.getBoundingClientRect();
+      if (bounds.top < 120 || bounds.bottom > window.innerHeight) {
+        input.scrollIntoView({ block: 'center', behavior: 'instant' });
+      }
+      input.focus({ preventScroll: true });
+      input.select();
+    };
+    window.addEventListener(OPEN_HOME_SEARCH, open);
+    return () => window.removeEventListener(OPEN_HOME_SEARCH, open);
+  }, []);
 
   // RESTORED: Simple country ready state - no localStorage redirects
   // CRITICAL SEO: Never redirect URLs from Google/external links
@@ -349,41 +386,6 @@ export default function RadioFrontend({
   const searchLoading = (searchQuery.trim().length >= 2 && debouncedSearchQuery !== searchQuery) || isSearching;
 
 
-
-  // Keyboard navigation handler for search results
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (!filteredStations || filteredStations.length === 0) return;
-
-    switch (e.key) {
-      case 'ArrowDown':
-        e.preventDefault();
-        setFocusedResultIndex(prev => 
-          prev < filteredStations.length - 1 ? prev + 1 : 0
-        );
-        break;
-      case 'ArrowUp':
-        e.preventDefault();
-        setFocusedResultIndex(prev => 
-          prev > 0 ? prev - 1 : filteredStations.length - 1
-        );
-        break;
-      case 'Enter':
-        e.preventDefault();
-        if (focusedResultIndex >= 0 && focusedResultIndex < filteredStations.length) {
-          const selectedStation = filteredStations[focusedResultIndex];
-          handlePlay(selectedStation);
-          setSearchQuery("");
-          const stationPath = selectedStation.slug ? `/station/${selectedStation.slug}` : `/station/${selectedStation._id}`;
-          navigateTranslated(stationPath);
-        }
-        break;
-      case 'Escape':
-        e.preventDefault();
-        setSearchQuery("");
-        setFocusedResultIndex(-1);
-        break;
-    }
-  }, [filteredStations, focusedResultIndex, navigateTranslated]);
 
   // DEFERRED: Genres only needed for dropdown, not LCP hero section
   // Deferring reduces critical request chain from 11.86s
@@ -810,10 +812,10 @@ export default function RadioFrontend({
 
   // In-memory search cache for instant repeat searches
   const searchCacheRef = useRef<Map<string, { stations: any[]; expiresAt: number }>>(new Map());
-  const abortControllerRef = useRef<AbortController | null>(null);
   
   // Search functionality - DIRECT backend API call with cache + abort for speed
   useEffect(() => {
+    const controller = new AbortController();
     const performSearch = async () => {
       const searchTerm = debouncedSearchQuery.trim();
       
@@ -834,12 +836,6 @@ export default function RadioFrontend({
         return;
       }
       
-      // Cancel previous request if still pending
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      abortControllerRef.current = new AbortController();
-      
       setIsSearching(true);
       
       try {
@@ -850,7 +846,7 @@ export default function RadioFrontend({
         });
         
         const response = await fetchStationCardList(params, {
-          signal: abortControllerRef.current.signal
+          signal: controller.signal
         });
         
         if (!response.ok) {
@@ -858,6 +854,7 @@ export default function RadioFrontend({
         }
         
         const data = await response.json();
+        if (controller.signal.aborted) return;
         
         if (data.stations) {
           const rankedStations = rankSearchResults(data.stations, searchTerm);
@@ -873,19 +870,55 @@ export default function RadioFrontend({
           setFilteredStations([]);
         }
       } catch (error: any) {
-        if (error.name !== 'AbortError') {
+        if (!controller.signal.aborted && error.name !== 'AbortError') {
           setFilteredStations([]);
         }
       } finally {
-        setIsSearching(false);
+        if (!controller.signal.aborted) setIsSearching(false);
       }
     };
     
     performSearch();
+    return () => controller.abort();
   }, [debouncedSearchQuery]);
 
-  // Enhanced loading state - tracks both debounce delay AND API request
-  // const [isSearching, setIsSearching] = useState(false); // Already declared above
+  // Opening from the header uses the same result surface, with already-fetched
+  // popular stations until the listener types a searchable term.
+  const visibleSearchStations = hasSearchTerm ? filteredStations : (popularStationsData || []).slice(0, 6);
+  const heroSearchLoading = hasSearchTerm ? searchLoading : popularStationsPending;
+
+  const selectHeroSearchStation = (station: any) => {
+    handlePlay(station);
+    closeHeroSearch(false);
+    navigateTranslated(station.slug ? `/station/${station.slug}` : `/station/${station._id}`);
+  };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key === 'Escape' && isHeroSearchOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeHeroSearch();
+      return;
+    }
+    if (!isHeroSearchOpen || heroSearchLoading || visibleSearchStations.length === 0) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setFocusedResultIndex(index => index < visibleSearchStations.length - 1 ? index + 1 : 0);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setFocusedResultIndex(index => index > 0 ? index - 1 : visibleSearchStations.length - 1);
+    } else if (event.key === 'Enter' && visibleSearchStations[focusedResultIndex]) {
+      event.preventDefault();
+      selectHeroSearchStation(visibleSearchStations[focusedResultIndex]);
+    }
+  };
+
+  useEffect(() => {
+    if (isHeroSearchOpen && focusedResultIndex >= 0) {
+      document.getElementById(`hero-search-option-${focusedResultIndex}`)?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [isHeroSearchOpen, focusedResultIndex]);
 
   return (
     <div className="w-full">
@@ -917,81 +950,86 @@ export default function RadioFrontend({
           
           <HomeHeroCopy language={language} />
 
-          {/* Search Box - EXACT from original megaradio design */}
-          <div className={`w-full sm:w-[85%] md:w-[80%] lg:w-[80%] max-w-[600px] relative overflow-visible px-4 sm:px-0 ${searchQuery && searchQuery.length >= 2 ? 'z-[999999]' : 'z-10'}`}>
-            {/* Backdrop - Only when searching */}
-            {searchQuery && searchQuery.length >= 2 && (
+          {/* Shared hero/header search, styled from Figma's open search component. */}
+          <div
+            className={`home-search-anchor ${isHeroSearchOpen ? 'home-search-anchor--open' : ''}`}
+            onBlur={(event) => {
+              if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) closeHeroSearch(false);
+            }}
+          >
+            {isHeroSearchOpen && (
               <div 
-                className="fixed inset-0 bg-[#0E0E0E]/80 backdrop-blur search-backdrop" 
-                onClick={() => setSearchQuery("")}
-                style={{ zIndex: 999998 }}
+                className="home-search-dismiss"
+                onClick={() => closeHeroSearch()}
+                data-testid="hero-search-backdrop"
               />
             )}
             
             {/* Search Container with unified border */}
             <div 
-              className={`relative ${searchQuery && searchQuery.length >= 2 ? 'rounded-2xl' : ''}`}
-              style={searchQuery && searchQuery.length >= 2 ? {
-                border: '2px solid rgba(255, 255, 255, 0.75)',
-                borderRadius: '16px',
-                zIndex: 999999
-              } : {}}
+              className={`home-search-panel ${isHeroSearchOpen ? 'home-search-panel--open' : ''}`}
             >
               {/* Search Input */}
-              <div className="relative flex items-center">
+              <div className="home-search-input-row">
                 <input
+                  ref={heroSearchInputRef}
                   type="text"
+                  role="combobox"
+                  aria-label={t('general_search', 'Search')}
+                  aria-autocomplete="list"
+                  aria-expanded={isHeroSearchOpen}
+                  aria-controls={isHeroSearchOpen ? 'hero-search-results' : undefined}
+                  aria-activedescendant={isHeroSearchOpen && !heroSearchLoading && visibleSearchStations[focusedResultIndex] ? `hero-search-option-${focusedResultIndex}` : undefined}
+                  autoComplete="off"
+                  data-testid="input-hero-search"
                   placeholder={t('hero_search_placeholder', 'Search for radio stations...')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearchKeyDown}
-                  className={`w-full h-12 sm:h-16 bg-white/20 backdrop-blur-sm ${searchQuery && searchQuery.length >= 2 ? 'rounded-t-xl rounded-b-none border-none' : 'rounded-2xl border-2 border-white/50'} pl-14 sm:pl-16 pr-5 sm:pr-6 text-white placeholder-white/70 focus:border-[#FF4199] focus:outline-none focus:ring-2 focus:ring-[#FF4199]/20 text-base font-medium transition-all duration-300`}
+                  className="home-search-input"
                 />
+                {isHeroSearchOpen && (
+                  <button type="button" onClick={() => closeHeroSearch()} aria-label={t('general_close', 'Close')}
+                    className="home-search-close">
+                    <img src="/icons/home-search/close-circle.svg" width="24" height="24" alt="" />
+                  </button>
+                )}
                 
                 {/* Search Icon - Left side (Outside input to avoid blur) */}
-                <div 
-                  className="absolute left-4 sm:left-5 top-1/2 transform -translate-y-1/2 text-white pointer-events-none flex-shrink-0 z-50"
-                  style={{ filter: 'none', backdropFilter: 'none', WebkitFilter: 'none' }}
-                >
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
+                <img className="home-search-icon" src="/icons/home-search/search-normal.svg" width="24" height="24" alt="" />
+                {isHeroSearchOpen && <img className="home-search-divider" src="/icons/home-search/divider.svg" alt="" />}
               </div>
               
-              {/* Search Results Dropdown - Apple Music style Glass Morphism */}
-              {searchQuery && searchQuery.length >= 2 && (
-                  <div 
-                    className="rounded-b-xl text-white shadow-2xl search-dropdown overflow-hidden"
-                    style={{
-                      background: 'rgba(245, 240, 255, 0.20)',
-                      backdropFilter: 'blur(25px)',
-                      WebkitBackdropFilter: 'blur(25px)'
-                    }}
-                  >
+              {/* A single glass surface keeps the hero visible through the results. */}
+              {isHeroSearchOpen && (
+                  <div className="home-search-dropdown">
                     {/* Results count - Minimal style */}
-                    {searchQuery.length > 0 && (
-                      <p className="px-5 py-2.5 text-white text-xs font-medium border-b border-gray-300/30 tracking-wide uppercase bg-white/20" style={{ fontFamily: "'Ubuntu', system-ui, sans-serif" }}>
-                        {filteredStations?.length || 0} {(filteredStations?.length || 0) === 1 ? t('station_found', 'station found') : t('stations_found', 'stations found')}
+                      <p aria-live="polite" className="home-search-count">
+                        {hasSearchTerm
+                          ? `${visibleSearchStations.length} ${visibleSearchStations.length === 1 ? t('station_found', 'station found') : t('stations_found', 'stations found')}`
+                          : t('popular_stations', 'Popular Stations')}
                       </p>
-                    )}
                     
                     {/* Search Results - Light translucent list */}
-                    <div 
-                      className="overflow-y-auto text-sm scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400/40 search-results-container"
-                      style={{ maxHeight: '400px' }}
+                    <ScrollArea
+                      type="auto"
+                      id="hero-search-results"
+                      role="listbox"
+                      aria-label={t('general_search', 'Search')}
+                      aria-busy={heroSearchLoading}
+                      className="home-search-results"
                     >
-                      {searchLoading ? (
+                      {heroSearchLoading ? (
                         <div className="flex items-center justify-center py-4">
                           <div className="flex items-center space-x-2">
                             <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-transparent"></div>
                             <span className="text-gray-300 text-sm">{t('searching', 'Searching...')}</span>
                           </div>
                         </div>
-                      ) : filteredStations && filteredStations.length > 0 ? (
+                      ) : visibleSearchStations.length > 0 ? (
                         <>
                           {/* Display all stations with highlighting and focus indicators */}
-                          {filteredStations.map((station: any, index: number) => {
+                          {visibleSearchStations.map((station: any, index: number) => {
                             const isHovered = hoveredResultIndex === index;
                             const isFocused = focusedResultIndex === index;
                             const isHighlighted = isHovered || isFocused;
@@ -999,22 +1037,16 @@ export default function RadioFrontend({
                             return (
                               <div
                                 key={station._id || index}
-                                className={`flex cursor-pointer items-center gap-3 px-5 py-3 transition-all duration-200 border-b border-gray-300/20 last:border-b-0 ${
-                                  isHighlighted 
-                                    ? 'bg-black/8' 
-                                    : 'hover:bg-black/5'
-                                }`}
+                                id={`hero-search-option-${index}`}
+                                role="option"
+                                aria-selected={isFocused}
+                                className={`home-search-option ${isHighlighted ? 'home-search-option--highlighted' : ''}`}
                                 onMouseEnter={() => setHoveredResultIndex(index)}
                                 onMouseLeave={() => setHoveredResultIndex(-1)}
-                                onClick={() => {
-                                  handlePlay(station);
-                                  setSearchQuery("");
-                                  const stationPath = station.slug ? `/station/${station.slug}` : `/station/${station._id}`;
-                                  navigateTranslated(stationPath);
-                                }}
+                                onClick={() => selectHeroSearchStation(station)}
                               >
                                 {/* Station Image - Apple style */}
-                                <div className="relative flex-shrink-0 h-11 w-11">
+                                <div className="relative flex-shrink-0 size-[38px]">
                                   <OptimizedImage
                                     src={
                                       // 1. Priority: Optimized logo assets
@@ -1027,9 +1059,9 @@ export default function RadioFrontend({
                                           decodeHtmlEntities(station.favicon) : ''
                                     }
                                     alt={`${station.name} favicon`}
-                                    width={44}
-                                    height={44}
-                                    className="w-full h-full rounded-lg object-cover"
+                                    width={38}
+                                    height={38}
+                                    className="w-full h-full rounded-[6px] object-cover"
                                     fallbackSrc="/images/no-image.webp"
                                   />
                                   {/* Country Flag - Minimal positioning */}
@@ -1047,7 +1079,7 @@ export default function RadioFrontend({
                                 
                                 {/* Station Info - White text style */}
                                 <div className="flex-1 min-w-0" style={{ fontFamily: "'Ubuntu', system-ui, sans-serif" }}>
-                                  <span className="font-medium text-white text-sm truncate block">{station.name}</span>
+                                  <span className="home-search-station-name">{station.name}</span>
                                   {station.country && (
                                     <span className="text-xs text-white/80 truncate block">{station.country}</span>
                                   )}
@@ -1064,15 +1096,15 @@ export default function RadioFrontend({
                             );
                           })}
                         </>
-                      ) : searchQuery.length >= 2 ? (
+                      ) : (
                         <div className="flex items-center justify-center py-4">
                           <div className="text-center">
-                            <p className="text-gray-300 text-sm">No stations found</p>
-                            <p className="text-gray-400 text-xs mt-1">Try a different search term</p>
+                            <p className="text-gray-300 text-sm">{t('no_stations_found', 'No stations found')}</p>
+                            <p className="text-gray-400 text-xs mt-1">{t('hero_search_placeholder', 'Search for radio stations...')}</p>
                           </div>
                         </div>
-                      ) : null}
-                    </div>
+                      )}
+                    </ScrollArea>
                   </div>
               )}
             </div>
