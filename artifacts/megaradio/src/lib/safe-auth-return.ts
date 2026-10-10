@@ -17,3 +17,12 @@ export function withAuthReturnTo(destination: string, returnTo: string | null | 
   url.searchParams.set('returnTo', target);
   return url.pathname + url.search + url.hash;
 }
+
+/** The header's router location has no query. Keep only the TV's valid pairing
+ * code across login; never copy OAuth tokens or unrelated query parameters. */
+export function tvPairingLoginReturnTo(pathname: string, search: string): string {
+  const target = safeAuthReturnTo(pathname) || '/';
+  if (!/^\/(?:[a-z]{2}\/)?tv\/?$/.test(target)) return target;
+  const code = new URLSearchParams(search).get('code');
+  return code && /^\d{6}$/.test(code) ? `${target}?code=${code}` : target;
+}
