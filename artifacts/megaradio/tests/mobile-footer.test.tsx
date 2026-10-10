@@ -118,7 +118,7 @@ describe('mobile footer', () => {
     expect(screen.getByRole('region').className).toContain('max-h-[min(320px,60dvh)]');
     expect(screen.getByRole('link', { name: 'youtube' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'facebook' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'MXRTOKEN' }).getAttribute('style')).not.toContain('color:');
+    expect(screen.queryByRole('link', { name: 'MXRTOKEN' })).not.toBeInTheDocument();
   });
 
   it('disconnects the deferred background observer on unmount', () => {
