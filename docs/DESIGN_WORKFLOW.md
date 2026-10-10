@@ -290,3 +290,25 @@ gerçek hesap işlemleri ve yayın oynatma bu tasarım kontrolünde denenmedi.
   doldurur; yalnız kontrollere taşmasını önleyen doğal ellipsis korunur.
   Önceki Keşfet, header/hero arama ve alt-player güncellemeleriyle birlikte
   yayın talep edildi. 140 dosyada 2.025 test, TypeScript ve build geçti.
+
+## 10 Ekim 2026 — Yayın sonrası mini player ayrıntıları
+
+- Önceki tasarım paketi PR #106 / `7bbb45b5f` ile yayımlandı. Bu bölümdeki
+  son düzenlemeler kullanıcı isteğiyle canlıya alınacak ek düzeltmelerdir.
+- Kullanıcının Chrome'unda 1512 px genişlikte Power POP ile karşılaştırıldı.
+  Kısa şarkı metninin `flex-grow` davranışı servis ikonlarını gereksiz yere
+  sağa itiyordu. Metin doğal genişliğini kullanır; ikonlar 12 px ardından
+  gelir. Uzun metin için sabit bir genişlik sınırı eklenmedi.
+- Web `856:2842` ve mobil `1711:10123` tasarım bağlamları yeniden alındı.
+  Figma'nın %85 siyah altlığı Web sayfasındaki `#e5e5e5` tuval üzerinde
+  yaklaşık `#222` görünür. Koyu web zemininin aynı görünümü vermesi için
+  altlık `rgb(38 38 38 / 85%)` olarak ayarlandı; 6 px CSS arka plan blur'u
+  korundu. Siyah kontrol yüzeyleri böylece ayırt edilir.
+- Masaüstü kontrol aralığı 20'den 12 px'e, ses grubu aralığı 19'dan 16 px'e
+  indi. 1512 px genişlikte kontrol grubunun başlangıcı x=698'den x=733'e
+  taşındı. Dar alan/mobil aralıkları CSS değişkeniyle 10/6 px kalır.
+- TypeScript, production build ve ilgili 56 test geçti. Chrome'da kısa/uzun
+  metin, 320/375/800/1512 px genişlikler, SVG ölçüleri ve küçült/aç kontrolü
+  doğrulandı; yatay taşma veya kontrollerle çakışma yok.
+- Kısa metin önizlemesi: `http://127.0.0.1:22508/tr?player-preview=1&short-title=1`.
+  Örnek metadata yalnız `.local/mini-player-preview.tsx` içindedir.
